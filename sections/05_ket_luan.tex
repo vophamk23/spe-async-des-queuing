@@ -1,0 +1,93 @@
+\section{Kết luận và Hướng dẫn sử dụng}
+\label{sec:ket-luan}
+
+\textit{\textbf{Hướng dẫn chung cho Phần 5:}} Phần này tổng kết toàn bộ kết quả nghiên cứu, đánh giá mức độ hoàn thành so với mục tiêu ban đầu, rút ra bài học kinh nghiệm và cung cấp tài liệu hướng dẫn sử dụng (User Manual) chi tiết giúp người chấm bài hoặc nhóm đánh giá chéo (Phase 3) có thể tái lập kết quả một cách dễ dàng.
+
+\subsection{Tổng kết kết quả đạt được}
+\label{subsec:tong-ket}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Tóm tắt các thành tựu chính của đề tài:
+    \begin{itemize}
+        \item Đã xây dựng thành công bộ máy mô phỏng sự kiện rời rạc (DES Core) hỗ trợ quản lý sự kiện bằng hàng đợi ưu tiên \texttt{LadderQueue} và điều phối bất đồng bộ với Python \texttt{asyncio}.
+        \item Đã mô hình hóa và kiểm chứng chính xác 6 mô hình hàng đợi kinh điển ($M/M/1$, $M/M/1/K$, $M/M/\infty$, $M/M/n/n$, $M/M/c$, $M/M/c/K$) và 1 mô hình mạng hàng đợi đa chặng.
+        \item Độ sai lệch giữa kết quả mô phỏng và công thức giải tích lý thuyết (Little's Law, Erlang-B, Erlang-C) đều nằm trong khoảng tin cậy 95\% với sai số tương đối dưới 3\%.
+        \item Nhận diện thành công nút thắt cổ chai trong mạng và đề xuất giải pháp tối ưu hóa năng lực phục vụ.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Bài học kinh nghiệm và Hướng phát triển}
+\label{subsec:bai-hoc-phat-trien}
+
+\subsubsection{Bài học kinh nghiệm trong mô phỏng hệ thống}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Bài học về việc phân tách tuyệt đối giữa thời gian ảo mô phỏng (\textit{Simulation Virtual Time}) và thời gian thực máy tính (\textit{Wall-clock Time}).
+    \item Kinh nghiệm xử lý đồng bộ và tính nhân quả khi kết hợp coroutine bất đồng bộ (\texttt{TaskGroup}, \texttt{Future}) với vòng lặp sự kiện rời rạc.
+    \item Tầm quan trọng của việc thu thập đủ số lượng mẫu (Replications) và loại bỏ giai đoạn khởi động (warm-up period) để đạt trạng thái dừng.
+\end{itemize}
+
+\subsubsection{Hạn chế và hướng mở rộng}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Hạn chế:} Hiện tại hệ thống vận hành trên một tiến trình duy nhất (single process event loop), chưa tận dụng hết sức mạnh đa nhân CPU cho các mạng hàng đợi cực lớn.
+    \item \textbf{Hướng phát triển:} Mở rộng sang mô hình mô phỏng sự kiện rời rạc song song và phân tán (\textit{Parallel and Distributed Simulation -- PDES}) áp dụng giao thức Time Warp (lạc quan) hoặc Chandy-Misra-Bryant (thận trọng); hỗ trợ thêm các phân phối tải dạng đuôi nặng (Pareto, Weibull) phản ánh lưu lượng mạng thực tế.
+\end{itemize}
+
+\subsection{Hướng dẫn cài đặt và Vận hành (User Manual)}
+\label{subsec:user-manual}
+
+\subsubsection{Yêu cầu hệ thống và môi trường thực thi}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Yêu cầu môi trường: Python 3.11 trở lên (khuyến nghị Python 3.11/3.12).
+    \item Các thư viện phụ thuộc: \texttt{numpy}, \texttt{scipy}, \texttt{matplotlib}, \texttt{seaborn}, \texttt{pytest}.
+    \item Hướng dẫn khởi tạo môi trường ảo:
+    \begin{lstlisting}[language=bash]
+python -m venv venv
+# Linux / macOS:
+source venv/bin/activate
+# Windows:
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+    \end{lstlisting}
+\end{itemize}
+
+\subsubsection{Cấu trúc mã nguồn và tham số dòng lệnh}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Giải thích sơ đồ cây thư mục mã nguồn: \texttt{bkitevsim/core/}, \texttt{bkitevsim/dispatchers/}, \texttt{bkitevsim/models/}, \texttt{bkitevsim/async\_engine/}, \texttt{experiments/}, \texttt{tests/}.
+    \item Lập bảng giải thích các cờ dòng lệnh (CLI flags) của file thực thi \texttt{main.py}:
+    \begin{itemize}
+        \item \texttt{--model}: Tên mô hình (\texttt{MM1}, \texttt{MM1K}, \texttt{MMINF}, \texttt{MMNN}, \texttt{MMC}, \texttt{MMCK}, \texttt{network}).
+        \item \texttt{--lambda}: Tốc độ đến trung bình $\lambda$.
+        \item \texttt{--mu}: Tốc độ phục vụ trung bình $\mu$.
+        \item \texttt{--servers}: Số lượng máy chủ $c$ (cho các mô hình đa server).
+        \item \texttt{--capacity}: Dung lượng tối đa $K$ (cho các mô hình hữu hạn).
+        \item \texttt{--sim-time}: Tổng thời gian ảo mô phỏng.
+        \item \texttt{--replications}: Số lần chạy lặp lại để tính khoảng tin cậy.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Kịch bản thử nghiệm và tái lập kết quả}
+\textit{\textbf{Nội dung cần viết:}}
+Cung cấp các câu lệnh mẫu để người dùng có thể chạy ngay và tái lập các kết quả trong báo cáo:
+\begin{lstlisting}[language=bash]
+# Chay mo hinh M/M/1 co ban:
+python main.py --model MM1 --lambda 8.0 --mu 10.0 --sim-time 10000
+
+# Chay mo hinh da server M/M/c/K:
+python main.py --model MMCK --servers 4 --capacity 20 --lambda 30.0 --mu 10.0
+
+# Chay toan bo bo thi nghiem va xuat bieu do tu dong:
+python experiments/run_single_queues.py
+python experiments/sensitivity_analysis.py
+\end{lstlisting}
+
+\subsubsection{Hướng dẫn chạy kiểm thử tự động (Verification)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{lstlisting}[language=bash]
+# Chay kiem thu toan bo cac thanh phan:
+pytest tests/ -v
+\end{lstlisting}
+

@@ -1,0 +1,111 @@
+\newgeometry{left=22mm, right=18mm, top=22mm, bottom=18mm, headheight=40pt, headsep=5pt, footskip=18pt}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{BẢNG PHÂN CÔNG NHIỆM VỤ}
+\markboth{BẢNG PHÂN CÔNG NHIỆM VỤ}{BẢNG PHÂN CÔNG NHIỆM VỤ}
+
+\begin{center}
+    \vspace*{-0.2cm}
+    {\fontsize{13}{15}\selectfont\bfseries BẢNG PHÂN CÔNG NHIỆM VỤ THỰC HIỆN ĐỀ TÀI\par}
+    \vspace{0.08cm}
+    {\fontsize{9.5}{11}\selectfont\itshape (Đính kèm Báo cáo Bài tập lớn -- \TenMonHoc{} -- Nhóm SPE-L0x-008)\par}
+\end{center}
+\vspace*{-0.4cm}
+\noindent
+\begin{center}
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{3.5pt}
+\fontsize{8}{10}\selectfont
+\renewcommand{\tabularxcolumn}[1]{m{#1}}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{0.8cm}|>{\raggedright\arraybackslash}m{2.7cm}|>{\centering\arraybackslash}m{1.4cm}|>{\centering\arraybackslash}m{2.1cm}|>{\raggedright\arraybackslash}X|>{\centering\arraybackslash}m{1.3cm}|}
+\hline
+\textbf{STT} & 
+\centering\textbf{Họ và tên} & 
+\textbf{MSSV} & 
+\textbf{Vai trò chính} & 
+\centering\textbf{Nhiệm vụ được phân công chi tiết} & 
+\textbf{Đánh giá} \\
+\hline
+% =========================================================================
+% NHÓM VAI TRÒ 1: DESIGNER
+% =========================================================================
+\multicolumn{6}{|c|}{\cellcolor{bkblue!15}\bfseries KHỐI VAI TRÒ 1: DESIGNER (THIẾT KẾ HỆ THỐNG, MÔ HÌNH HÓA \& KIẾN TRÚC PHẦN MỀM)} \\
+\hline
+\textbf{1} & --- & --- & 
+\textbf{Designer}\newline\textit{(System \& DES Arch)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Xác định bối cảnh, ranh giới hệ thống và các dịch vụ đánh giá; soạn thảo \textbf{Mục 1.1, 1.2}.
+    \item Thiết kế kiến trúc tổng thể bộ máy mô phỏng DES (Event Loop, PDES, LVT); soạn thảo \textbf{Mục 3.1}.
+\end{itemize} & --- \\
+\hline
+\textbf{2} & --- & --- & 
+\textbf{Designer}\newline\textit{(Metrics \& Async Arch)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Thiết kế hệ thống chỉ số hiệu năng (Time-weighted vs. Sample-averaged); soạn thảo \textbf{Mục 1.3, 1.4, 1.5}.
+    \item Thiết kế kiến trúc bất đồng bộ phi nghẽn luồng và phân tách dòng thời gian ảo; soạn thảo \textbf{Mục 3.2, 3.3}.
+\end{itemize} & --- \\
+\hline
+\textbf{3} & --- & --- & 
+\textbf{Designer}\newline\textit{(Models \& UML Design)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Mô hình hóa lý thuyết hàng đợi đơn ($M/M/1, M/M/1/K, M/M/\infty$) và đa server/mạng; soạn thảo \textbf{Phần 2 (Mục 2.1 -- 2.3)}.
+    \item Thiết kế hướng đối tượng phần mềm, đặc tả quan hệ và xây dựng biểu đồ UML; soạn thảo \textbf{Mục 3.4}.
+\end{itemize} & --- \\
+\hline
+% =========================================================================
+% NHÓM VAI TRÒ 2: DEVELOPER / DEV
+% =========================================================================
+\multicolumn{6}{|c|}{\cellcolor{bkblue!15}\bfseries KHỐI VAI TRÒ 2: DEV / DEVELOPER (PHÁT TRIỂN \& HIỆN THỰC TOÀN BỘ MÃ NGUỒN)} \\
+\hline
+\textbf{4} & --- & --- & 
+\textbf{Dev}\newline\textit{(Lead DES Engine)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Lập trình hạt nhân điều phối DES (\texttt{SequentialEventDispatcher}), cấu trúc \texttt{Event} và đồng hồ ảo LVT trong gói \texttt{bkitevsim/core/} và \texttt{bkitevsim/dispatchers/}.
+    \item Hiện thực hàng đợi phân tầng \texttt{LadderQueue} $O(1)$ và \texttt{MinHeapPriorityQueue} $O(\log N)$.
+\end{itemize} & --- \\
+\hline
+\textbf{5} & --- & --- & 
+\textbf{Dev}\newline\textit{(Async Coordination)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Lập trình tầng bất đồng bộ \texttt{bkitevsim/async\_engine/}: bộ quản lý lời hứa \texttt{AsyncFutureManager} (Promise/Future) và coroutine \texttt{BkSysCoLogicalProcess}.
+    \item Hiện thực bộ điều phối \texttt{AsyncTaskCoordinator} hỗ trợ \texttt{TaskGroup}, \texttt{gather}, \texttt{as\_completed}, \texttt{Runner}.
+\end{itemize} & --- \\
+\hline
+\textbf{6} & --- & --- & 
+\textbf{Dev}\newline\textit{(LP Models \& Manual)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Lập trình các trạm logic \texttt{bkitevsim/models/}: \texttt{SourceLP}, \texttt{QueueServerLP} (Kendall hợp nhất), \texttt{BranchingServerLP}, \texttt{SinkLP}.
+    \item Lập trình bộ tích lũy \texttt{MetricsCollector}; viết hướng dẫn cài đặt và cấu trúc mã nguồn (\textbf{Mục 5.3}).
+\end{itemize} & --- \\
+\hline
+% =========================================================================
+% NHÓM VAI TRÒ 3: EXPERIMENT / EXPERIMENTER
+% =========================================================================
+\multicolumn{6}{|c|}{\cellcolor{bkblue!15}\bfseries KHỐI VAI TRÒ 3: EXPERIMENT / THỰC NGHIỆM (KIỂM CHỨNG \& ĐÁNH GIÁ HIỆU NĂNG)} \\
+\hline
+\textbf{7} & --- & --- & 
+\textbf{Experiment}\newline\textit{(Workload \& Scenarios)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Thiết kế bộ sinh tải (Poisson Workload Generator, Bursty Traffic) và ma trận kịch bản thực nghiệm từ tải nhẹ đến bão hòa ($\rho = 0.1 \to 0.95$).
+    \item Soạn thảo \textbf{Mục 4.1 và Mục 4.2} (Workload \& Thiết kế kịch bản).
+\end{itemize} & --- \\
+\hline
+\textbf{8} & --- & --- & 
+\textbf{Experiment}\newline\textit{(Verification \& Valid)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Xây dựng bộ kiểm thử tự động 31 bài test (\texttt{pytest}), kiểm chứng tính bảo toàn Job, tính đơn điệu nhân quả (Trace log).
+    \item Thẩm định độ chính xác mô hình ($M/M/1$, Erlang loss $M/M/n/n$, Jackson Network) với sai số $< 5\%$; soạn thảo \textbf{Mục 4.3, 4.4}.
+\end{itemize} & --- \\
+\hline
+\textbf{9} & --- & --- & 
+\textbf{Experiment}\newline\textit{(Sensitivity Analysis)} & 
+\begin{itemize}[nosep, leftmargin=1.1em, topsep=1pt, partopsep=0pt]
+    \item Thực hiện phân tích độ nhạy dung lượng bộ đệm $K$ (đánh đổi Drop rate vs. Latency), nhận diện nút thắt cổ chai, xuất biểu đồ 300 DPI.
+    \item Phân tích tối ưu hóa hệ thống; soạn thảo \textbf{Mục 4.5 và Mục 5.1, 5.2} (Tổng kết, bài học kinh nghiệm).
+\end{itemize} & --- \\
+\hline
+\end{tabularx}
+\end{center}
+
+\restoregeometry

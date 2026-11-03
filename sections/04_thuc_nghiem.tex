@@ -1,0 +1,142 @@
+\section{Kịch bản thực nghiệm, Kiểm chứng và Thẩm định}
+\label{sec:thuc-nghiem-vv}
+
+\textit{\textbf{Hướng dẫn chung cho Phần 4:}} Đây là phần chiếm trọng số điểm cao nhất (Giai đoạn 2 -- 4 điểm). Nhóm cần trình bày đầy đủ các kịch bản thực nghiệm, phân biệt rõ giữa Kiểm chứng (Verification -- kiểm tra code chạy đúng logic) và Thẩm định (Validation -- kiểm tra mô hình khớp với lý thuyết toán học), kèm theo phân tích độ nhạy và nhận diện điểm nghẽn.
+
+\subsection{Thiết kế khối lượng công việc (Workload)}
+\label{subsec:workload-design}
+
+\subsubsection{Bộ sinh tải Poisson và Exponential}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Trình bày phương pháp nghịch đảo hàm phân phối tích lũy (\textit{Inverse Transform Sampling}) để sinh biến ngẫu nhiên thời gian đến và thời gian phục vụ:
+    \begin{equation}
+        X = -\frac{1}{\lambda} \ln(1 - U) \quad \text{với } U \sim \text{Uniform}(0, 1)
+    \end{equation}
+    \item Vẽ biểu đồ tần suất (Histogram) so sánh phân phối mẫu được sinh ra với hàm mật độ xác suất lý thuyết $f(x) = \lambda e^{-\lambda x}$ để chứng minh tính chuẩn xác của bộ sinh tải.
+\end{itemize}
+
+\subsubsection{Kịch bản tải biến động ngẫu nhiên (Bursty Traffic)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Thiết kế kịch bản tải đột biến (Traffic Burst) theo từng đợt để kiểm tra độ bền và khả năng hấp thụ tải của các mô hình hàng đợi có bộ đệm.
+\end{itemize}
+
+\subsection{Thiết kế kịch bản thực nghiệm (Experimental Design)}
+\label{subsec:experimental-design}
+
+\subsubsection{Ma trận kịch bản đo đạc}
+\textit{\textbf{Nội dung cần viết:}}
+Lập bảng ma trận các kịch bản thử nghiệm cho từng mô hình:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Mô hình $M/M/1$ \& $M/M/c$:} Cố định $\mu = 10$, quét $\lambda$ từ $1$ đến $9.5$ (tương ứng $\rho \in [0.1, 0.95]$).
+    \item \textbf{Mô hình $M/M/1/K$ \& $M/M/c/K$:} Quét $K \in \{5, 10, 20, 50\}$ dưới các mức tải $\rho \in \{0.5, 0.8, 1.0, 1.2\}$ (khảo sát cả trường hợp quá tải $\rho \ge 1$).
+    \item \textbf{Mô hình Erlang loss $M/M/n/n$:} Khảo sát số kênh $n \in \{2, 5, 10, 20\}$, thay đổi tải Erlang $a = \lambda/\mu$ từ $1$ đến $15$.
+    \item \textbf{Mạng hàng đợi (Network):} Cấu hình các tham số theo Hình 1 đề bài: $\mu_4$ (I/O), $\mu_1$ (CPU), $\mu_2$ (Printer), $\mu_3$ (Disk) với xác suất rẽ nhánh $p_{printer}=0.3$, $p_{disk}=0.7$.
+    \item Thời gian chạy mô phỏng: Tối thiểu $T_{sim} = 10{,}000$ đơn vị thời gian hoặc xử lý tối thiểu $100{,}000$ sự kiện để đạt trạng thái dừng (\textit{steady-state}).
+\end{itemize}
+
+\subsubsection{Chiến lược lặp (Replications) và Khoảng tin cậy 95\%}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Áp dụng kỹ thuật chạy lặp độc lập (\textit{Independent Replications}): Chạy mỗi kịch bản ít nhất $R = 30$ lần với các giá trị \texttt{seed} ngẫu nhiên khác nhau.
+    \item Tính giá trị trung bình mẫu $\bar{X}$, độ lệch chuẩn mẫu $s$ và khoảng tin cậy 95\% theo phân phối Student's $t$:
+    \begin{equation}
+        CI_{95\%} = \left[ \bar{X} - t_{0.975, R-1} \frac{s}{\sqrt{R}}, \quad \bar{X} + t_{0.975, R-1} \frac{s}{\sqrt{R}} \right]
+    \end{equation}
+    \item Đảm bảo vẽ các thanh sai số (\textit{error bars}) trên toàn bộ đồ thị kết quả thực nghiệm.
+\end{itemize}
+
+\subsection{Kiểm chứng mã nguồn mô phỏng (Verification)}
+\label{subsec:verification}
+
+\subsubsection{Kiểm thử đơn vị các thành phần (Component Unit Testing)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Trình bày các ca kiểm thử tự động (\texttt{pytest}): Test thứ tự ưu tiên của \texttt{LadderQueue}, test xử lý push/pop không làm mất sự kiện, test logic giải phóng server khi hoàn thành tác vụ.
+\end{itemize}
+
+\subsubsection{Phân tích nhật ký vết tính toán (Computational Trace Analysis)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Trích xuất nhật ký vết (trace log) của 20 sự kiện liên tiếp đầu tiên.
+    \item Phân tích chứng minh dấu thời gian luôn tăng đơn điệu ($t_1 \le t_2 \le \dots \le t_{20}$), không xảy ra hiện tượng sự kiện tương lai can thiệp vào quá khứ.
+\end{itemize}
+
+\subsubsection{Kiểm tra tính nhất quán logic}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Kiểm tra định luật bảo toàn số lượng yêu cầu:
+    \begin{equation}
+        N_{arrived} = N_{completed} + N_{in\_system} + N_{dropped}
+    \end{equation}
+    Sai số bảo toàn phải tuyệt đối bằng 0 trong toàn bộ các đợt mô phỏng.
+\end{itemize}
+
+\subsection{Thẩm định mô hình thực nghiệm (Validation)}
+\label{subsec:validation}
+
+\textit{\textbf{Yêu cầu cốt lõi:}} Với mỗi mô hình bên dưới, bắt buộc phải có: (1) Bảng đối chiếu số liệu [Lý thuyết vs Mô phỏng vs Sai số \%], (2) Đồ thị so sánh trực quan (đường lý thuyết nét liền, điểm mô phỏng dạng chấm có thanh sai số).
+
+\subsubsection{Thẩm định mô hình hàng đợi đơn \texorpdfstring{$M/M/1$}{M/M/1}}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Lập bảng và vẽ đồ thị so sánh $L$ và $W$ giữa mô phỏng và công thức $L = \frac{\rho}{1-\rho}$, $W = \frac{1}{\mu - \lambda}$.
+    \item Chứng minh sai số tương đối $\text{Error} = \frac{|\text{Sim} - \text{Theory}|}{\text{Theory}} \times 100\% < 3\%$.
+\end{itemize}
+
+\subsubsection{Thẩm định mô hình hàng đợi hữu hạn \texorpdfstring{$M/M/1/K$}{M/M/1/K} và \texorpdfstring{$M/M/c/K$}{M/M/c/K}}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item So sánh xác suất rớt gói $P_b$ và thông lượng thực tế $\lambda_{eff}$ giữa mô phỏng và công thức giải tích.
+\end{itemize}
+
+\subsubsection{Thẩm định hệ thống mất gói \texorpdfstring{$M/M/n/n$}{M/M/n/n} (Erlang-B)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Vẽ đồ thị so sánh xác suất chặn $P_b$ thu thập từ mô phỏng với đường cong lý thuyết \textbf{Erlang-B} khi thay đổi tải Erlang $a \in [1, 20]$.
+\end{itemize}
+
+\subsubsection{Thẩm định mô hình đa server \texorpdfstring{$M/M/c$}{M/M/c} (Erlang-C)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Đối chiếu xác suất khách hàng phải chờ trong hàng đợi $P(W > 0)$ với công thức \textbf{Erlang-C}.
+\end{itemize}
+
+\subsubsection{Thẩm định mô hình mạng hàng đợi (Queuing Network)}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item So sánh thông lượng đo được tại từng nút (I/O, CPU, Printer, Disk) với phương trình cân bằng lưu lượng.
+    \item Kiểm chứng tổng thời gian trễ toàn mạng bằng định luật Little mở rộng: $L_{network} = \lambda W_{total}$.
+\end{itemize}
+
+\subsection{Phân tích độ nhạy và Tối ưu hóa hệ thống}
+\label{subsec:sensitivity-tuning}
+
+\subsubsection{Khảo sát hành vi hệ thống khi tiến đến điểm bão hòa (\texorpdfstring{$\rho \to 1$}{rho -> 1})}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Phân tích hiện tượng bùng nổ độ trễ và chiều dài hàng đợi khi hệ số tải vượt ngưỡng $\rho = 0.85$.
+    \item Xác định điểm giới hạn vận hành tối ưu (knee point) để đảm bảo thông lượng tối đa mà độ trễ vẫn nằm trong ngưỡng chấp nhận được.
+\end{itemize}
+
+\subsubsection{Phân tích độ nhạy của dung lượng bộ đệm \texorpdfstring{$K$}{K}}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Đánh giá sự đánh đổi (\textit{trade-off}): Tăng $K$ giúp giảm tỉ lệ mất gói $P_b$, nhưng lại làm tăng thời gian chờ trung bình $W_q$ (hiện tượng \textit{Bufferbloat}).
+    \item Tìm kích thước bộ đệm tối ưu $K^*$ thỏa mãn điều kiện ràng buộc về tỉ lệ mất gói ($P_b \le 1\%$).
+\end{itemize}
+
+\subsubsection{Nhận diện nút thắt cổ chai (Bottlenecks) trong mạng hàng đợi}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Xác định nút có hệ số sử dụng cao nhất trong mạng (ví dụ: nút CPU hoặc Disk).
+    \item Phân tích ảnh hưởng của nút thắt cổ chai đến thông lượng tối đa của toàn bộ mạng hệ thống.
+\end{itemize}
+
+\subsubsection{Đề xuất phương án tối ưu hóa và phân bổ tài nguyên}
+\textit{\textbf{Nội dung cần viết:}}
+\begin{itemize}[leftmargin=1.5em]
+    \item Đề xuất các giải pháp kỹ thuật: Nâng cấp tốc độ phục vụ $\mu$ của nút nghẽn, bổ sung máy chủ song song tại nút nghẽn, hoặc điều chỉnh tỉ lệ phân luồng ($p_{printer}, p_{disk}$) để cân bằng tải.
+    \item Chạy lại mô phỏng sau khi tối ưu hóa để chứng minh hiệu quả cải thiện thông lượng và giảm độ trễ.
+\end{itemize}

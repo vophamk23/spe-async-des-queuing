@@ -1,0 +1,27 @@
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{TÓM TẮT ĐỀ TÀI}
+\markboth{TÓM TẮT ĐỀ TÀI}{TÓM TẮT ĐỀ TÀI}
+
+\begin{center}
+    \vspace*{-0.8cm}
+    {\fontsize{15}{18}\selectfont\bfseries TÓM TẮT ĐỀ TÀI\par}
+    \vspace{0.15cm}
+    {\fontsize{10.5}{13}\selectfont\itshape (ĐÁNH GIÁ HIỆU NĂNG HỆ THỐNG BẤT ĐỒNG BỘ BẰNG LÝ THUYẾT HÀNG ĐỢI VÀ MÔ PHỎNG SỰ KIỆN RỜI RẠC)\par}
+    % \vspace{0.3cm}
+    % \rule{0.6\textwidth}{0.8pt}
+\end{center}
+
+\vspace{0.35cm}
+
+Báo cáo Bài tập lớn này tập trung vào việc mô hình hóa, thiết kế kiến trúc và đánh giá hiệu năng toàn diện một hệ thống tính toán phân tán với cơ chế truyền thông bất đồng bộ phi nghẽn luồng (\textit{asynchronous non-blocking communication}). Dựa trên phương pháp luận 10 bước của GS.~Raj Jain, nhóm nghiên cứu đã kết hợp chặt chẽ giữa \textbf{Lý thuyết hàng đợi giải tích} (\textit{Analytical Queuing Theory}) và kỹ thuật \textbf{Mô phỏng sự kiện rời rạc} (\textit{Discrete-Event Simulation -- DES}).
+
+Về mặt lý thuyết, hệ thống được mô hình hóa thành mạng hàng đợi mở nhiều chặng theo Định lý Jackson, bao gồm thiết bị I/O, máy chủ trung tâm CPU và các thiết bị ngoại vi (Máy in, Ổ đĩa) rẽ nhánh xác suất, cùng hệ thống các mô hình hàng đợi đơn chuẩn Kendall: $M/M/1$, $M/M/1/K$, $M/M/\infty$, $M/M/c$ và hệ thống tổn thất Erlang $M/M/n/n$. 
+
+Về mặt hiện thực, nhóm đã xây dựng thành công một bộ máy mô phỏng DES hướng đối tượng tuân thủ mô hình tiến trình logic PDES của Fujimoto. Hệ thống tích hợp đồng hồ thời gian ảo LVT đơn điệu, cấu trúc hàng đợi phân tầng hai cấp \texttt{LadderQueue} đạt độ phức tạp $O(1)$, và ứng dụng các kỹ thuật đồng quy hiện đại trong Python 3.11+ (\texttt{asyncio.TaskGroup}, \texttt{AsyncFutureManager}, \texttt{Runner}) để phối hợp các tác vụ bất đồng bộ.
+
+Kết quả kiểm chứng (\textit{Verification}) thông qua bộ kiểm thử tự động 31 ca kiểm thử chuyên sâu (\texttt{pytest}) xác nhận hệ thống bảo toàn tuyệt đối số lượng thực thể và tính nhân quả thời gian. Quá trình thẩm định (\textit{Validation}) với $5$ lượt lặp độc lập (\textit{replications}) và ước lượng Khoảng tin cậy $95\%$ Student's t cho thấy kết quả mô phỏng hội tụ xuất sắc với nghiệm giải tích, đạt sai số tương đối $\varepsilon < 5\%$ trên toàn dải tải trọng ($\rho = 0.1 \to 0.95$). Cuối cùng, phân tích độ nhạy đã làm rõ sự đánh đổi giữa tỉ lệ rơi gói và thời gian trễ theo dung lượng bộ đệm $K$, đồng thời định vị chính xác nút thắt cổ chai (\textit{Bottleneck}) phục vụ mục tiêu tối ưu hóa tài nguyên.
+
+\vspace{0.5cm}
+\noindent
+\textbf{Từ khóa:} Mô phỏng sự kiện rời rạc (DES), Lý thuyết hàng đợi, Ký hiệu Kendall, Python asyncio, TaskGroup, LadderQueue, Định lý Jackson, Khoảng tin cậy 95\%, Phân tích độ nhạy.

@@ -1,0 +1,311 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{type1cm}
+
+% --- HỖ TRỢ TIẾNG VIỆT VÀ MÃ HÓA UNICODE ---
+\usepackage{vntex}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+
+% --- CẤU HÌNH TRANG VÀ LỀ CHUẨN ĐẠI HỌC BÁCH KHOA TP.HCM ---
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=30mm,
+    right=20mm,
+    top=30mm,
+    bottom=25mm,
+    headheight=40pt,
+    headsep=30pt,
+    footskip=30pt
+}
+
+
+% --- KHOẢNG CÁCH DÒNG VÀ ĐOẠN VĂN ---
+\usepackage{setspace}
+\onehalfspacing                 % Khoảng cách dòng 1.5
+\setlength{\parindent}{1.5em}    % Thụt đầu dòng đoạn văn
+\setlength{\parskip}{6pt}        % Khoảng cách giữa các đoạn
+
+% --- CẤU HÌNH TYPOGRAPHY & CHỐNG TRÀN LỀ (OVERFULL/UNDERFULL HBOX) ---
+\usepackage{microtype}
+\emergencystretch=2em
+\tolerance=1500
+\hbadness=2500
+\hfuzz=1pt
+
+% --- GÓI TOÁN HỌC & KÝ HIỆU KỸ THUẬT ---
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{bm}
+
+% --- HÌNH ẢNH, BẢNG BIỂU & ĐỒ HỌA ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\keepXColumns
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{lastpage}
+\usepackage{varwidth}
+\usepackage{enumitem}
+\usepackage[table,xcdraw]{xcolor}
+\definecolor{bkblue}{RGB}{0,82,156}
+\definecolor{boxbg}{RGB}{246,249,254}
+\definecolor{successbg}{RGB}{232,245,233}
+\definecolor{successborder}{RGB}{46,125,50}
+\usepackage{tikz}
+\usetikzlibrary{calc,arrows,arrows.meta,positioning,shapes,shapes.geometric}
+\usepackage[most]{tcolorbox}
+\tcbset{halign title=flush left}
+
+% --- CẤU HÌNH HỘP ĐÓNG KHUNG CÔNG THỨC TOÁN HỌC (TCOLORBOX) ---
+\newtcolorbox{modelbox}[2][]{
+    colback=boxbg,
+    colframe=bkblue,
+    arc=2.5mm,
+    boxrule=0.9pt,
+    title=\textbf{#2},
+    fonttitle=\small\bfseries\color{white},
+    fontupper=\small,
+    coltitle=white,
+    left=7pt,
+    right=7pt,
+    top=7pt,
+    bottom=7pt,
+    boxsep=3pt,
+    enhanced,
+    attach boxed title to top left={yshift=-2.5mm, xshift=4mm},
+    boxed title style={colback=bkblue, arc=1.5mm, boxrule=0pt},
+    #1
+}
+
+\newtcolorbox{theorempop}[1][]{
+    colback=white,
+    colframe=bkblue!85!black,
+    arc=1.5mm,
+    boxrule=0.8pt,
+    left=7pt, right=7pt, top=6pt, bottom=6pt,
+    boxsep=2pt,
+    #1
+}
+
+\captionsetup[figure]{labelfont={small,bf},textfont={small,it},belowskip=4pt,aboveskip=6pt}
+\captionsetup[table]{labelfont={small,bf},textfont={small,it},belowskip=4pt,aboveskip=6pt}
+
+% --- LIÊN KẾT SIÊU VĂN BẢN (HYPERREF) ---
+\usepackage[unicode,pdfpagelabels=false]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue,
+    urlcolor=blue,
+    bookmarksnumbered=true,
+    plainpages=false
+}
+
+% --- ĐỊNH DẠNG CODE LẬP TRÌNH (LISTINGS) ---
+\usepackage{listings}
+\definecolor{codebg}{rgb}{0.96,0.96,0.96}
+\definecolor{commentgreen}{rgb}{0,0.6,0}
+\definecolor{keywordblue}{rgb}{0,0,0.8}
+\definecolor{stringred}{rgb}{0.8,0,0}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    frame=single,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{keywordblue}\bfseries,
+    commentstyle=\color{commentgreen}\itshape,
+    stringstyle=\color{stringred},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    breaklines=true,
+    tabsize=2,
+    showstringspaces=false
+}
+
+% ==============================================================
+%               CẤU HÌNH THÔNG TIN BÀI TẬP LỚN
+% ==============================================================
+\newcommand{\TenMonHoc}{Đánh giá Hiệu năng Hệ thống (CO3007)}
+% \newcommand{\TenDeTai}{ĐÁNH GIÁ HIỆU NĂNG HỆ THỐNG BẤT ĐỒNG BỘ BẰNG LÝ THUYẾT HÀNG ĐỢI VÀ MÔ PHỎNG RỜI RẠC}
+
+\newcommand{\TenDeTai}{%
+  ĐÁNH GIÁ HIỆU NĂNG HỆ THỐNG BẤT ĐỒNG BỘ\\
+  DỰA TRÊN LÝ THUYẾT HÀNG ĐỢI VÀ MÔ PHỎNG SỰ KIỆN RỜI RẠC%
+}
+
+\newcommand{\LopMonHoc}{L02}
+\newcommand{\HocKy}{HK261}
+\newcommand{\NgayNop}{27/10/2026}
+\newcommand{\GVHD}{Thầy Nguyễn Phương Duy}
+
+% --- TIÊU ĐỀ TRANG VÀ CHÂN TRANG (FANCYHDR CHO ARTICLE) ---
+\usepackage{fancyhdr}
+\setlength{\headheight}{40pt}
+\pagestyle{fancy}
+\fancyhead{}
+
+\renewcommand{\sectionmark}[1]{\markboth{\thesection.\ #1}{}}
+
+\fancyhead[L]{%
+  \raisebox{8.5pt}{%
+    \begin{tabular}[c]{@{}c@{\hspace{2mm}}l@{}}
+      \raisebox{-0.15\height}{\includegraphics[width=7.5mm, height=7mm]{image/hcmut.png}} &
+      \begin{varwidth}[c]{75mm}\raggedright
+        \fontsize{8pt}{12.5pt}\selectfont \mbox{TRƯỜNG ĐẠI HỌC BÁCH KHOA -- ĐHQG-HCM}\newline
+        \fontsize{8pt}{12.5pt}\selectfont \mbox{KHOA KHOA HỌC \& KỸ THUẬT MÁY TÍNH}
+      \end{varwidth}
+    \end{tabular}%
+  }%
+}
+
+% \fancyhead[R]{%
+%   \raisebox{7pt}{%
+%     \begin{varwidth}[c]{80mm}\raggedleft
+%       \fontsize{8pt}{11pt}\selectfont \nouppercase{\leftmark}
+%     \end{varwidth}%
+%   }%
+% }
+
+\fancyfoot{}
+\fancyfoot[L]{\scriptsize \TenMonHoc\\ Năm học: 2025 - 2026}
+\fancyfoot[R]{\scriptsize Trang {\thepage}/\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+\fancypagestyle{plain}{
+  \fancyhead{}
+  \fancyhead[L]{%
+    \raisebox{8.5pt}{%
+      \begin{tabular}[c]{@{}c@{\hspace{2mm}}l@{}}
+        \raisebox{-0.15\height}{\includegraphics[width=7.5mm, height=7mm]{image/hcmut.png}} &
+        \begin{varwidth}[c]{75mm}\raggedright
+          \fontsize{9pt}{12.5pt}\selectfont \mbox{TRƯỜNG ĐẠI HỌC BÁCH KHOA -- ĐHQG-HCM}\newline
+          \fontsize{9pt}{12.5pt}\selectfont \mbox{KHOA KHOA HỌC \& KỸ THUẬT MÁY TÍNH}
+        \end{varwidth}
+      \end{tabular}%
+    }%
+  }
+  \fancyhead[R]{%
+    \raisebox{7pt}{%
+      \begin{varwidth}[c]{80mm}\raggedleft
+        \fontsize{9pt}{11pt}\selectfont \nouppercase{\leftmark}
+      \end{varwidth}%
+    }%
+  }
+  \fancyfoot{}
+  \fancyfoot[L]{\scriptsize \TenMonHoc\\ Năm học: 2025 - 2026}
+  \fancyfoot[R]{\scriptsize Trang {\thepage}/\pageref{LastPage}}
+  \renewcommand{\headrulewidth}{0.3pt}
+  \renewcommand{\footrulewidth}{0.3pt}
+}
+
+% Định nghĩa lại tiêu đề tiếng Việt
+\addto\captionsvietnamese{
+    \renewcommand{\contentsname}{MỤC LỤC}
+    \renewcommand{\listfigurename}{DANH MỤC HÌNH VẼ}
+    \renewcommand{\listtablename}{DANH MỤC BẢNG BIỂU}
+    \renewcommand{\refname}{TÀI LIỆU THAM KHẢO}
+}
+
+% Định dạng cỡ chữ tiêu đề
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\normalfont\fontsize{15}{18}\selectfont\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\fontsize{13}{16}\selectfont\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+                                     {-2.8ex\@plus -0.8ex \@minus -.2ex}%
+                                     {1.2ex \@plus .2ex}%
+                                     {\normalfont\fontsize{12}{15}\selectfont\bfseries}}
+\makeatother
+
+% ==============================================================
+%                    BẮT ĐẦU TÀI LIỆU
+% ==============================================================
+\begin{document}
+
+% --- TRANG BÌA ---
+\pagenumbering{gobble}
+\input{cover}
+\clearpage
+
+% --- PHẦN ĐẦU (ĐÁNH SỐ LA MÃ) ---
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+% 1. Bảng phân công nhiệm vụ
+\input{sections/assignment}
+\clearpage
+
+% 2. Tóm tắt đề tài (Abstract)
+\input{sections/abstract}
+\clearpage
+
+% 3. Mục lục
+\phantomsection
+\addcontentsline{toc}{section}{\contentsname}
+\begingroup
+\setstretch{1.18}
+\setlength{\parskip}{1.5pt}
+\tableofcontents
+\clearpage
+
+% 3. Danh mục hình vẽ
+\phantomsection
+\addcontentsline{toc}{section}{\listfigurename}
+\listoffigures
+\clearpage
+
+% 4. Danh mục bảng biểu
+\phantomsection
+\addcontentsline{toc}{section}{\listtablename}
+\listoftables
+\endgroup
+\clearpage
+
+% --- NỘI DUNG CHÍNH (ĐÁNH SỐ TRANG Ả RẬP) ---
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{sections/01_tong_quan}
+\clearpage
+
+\input{sections/02_kien_truc}
+\clearpage
+
+\input{sections/03_hien_thuc}
+\clearpage
+
+% \input{sections/04_thuc_nghiem}
+% \clearpage
+
+% \input{sections/05_ket_luan}
+
+
+% --- TÀI LIỆU THAM KHẢO ---
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{\refname}
+\markboth{\refname}{\refname}
+\begin{thebibliography}{99}
+\bibitem{ref_jain} Raj Jain, \textit{The Art of Computer Systems Performance Analysis: Techniques for Experimental Design, Measurement, Simulation, and Modeling}, John Wiley \& Sons, 1991.
+\bibitem{ref_harchol} Mor Harchol-Balter, \textit{Performance Modeling and Design of Computer Systems: Queueing Theory in Action}, Cambridge University Press, 2013.
+\bibitem{ref_kleinrock} Leonard Kleinrock, \textit{Queueing Systems, Volume 1: Theory}, Wiley-Interscience, 1975.
+\bibitem{ref_fujimoto} Richard M. Fujimoto, \textit{Parallel and Distributed Simulation Systems}, John Wiley \& Sons, 2000.
+\bibitem{ref_python_asyncio} Python Software Foundation, \textit{asyncio --- Asynchronous I/O Documentation (Python 3.11+)}, \url{https://docs.python.org/3/library/asyncio.html}.
+\bibitem{ref_assignment_spec} Khoa KH\&KT Máy tính -- ĐH Bách Khoa ĐHQG-HCM, \textit{Course: System Performance Evaluation -- The Queuing Systems-based Performance Evaluation Project (hk261\_dasyn\_asspe)}, Tháng 10/2026.
+\end{thebibliography}
+
+
+\end{document}

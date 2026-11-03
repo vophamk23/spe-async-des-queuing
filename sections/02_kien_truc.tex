@@ -1,0 +1,745 @@
+\section{Cơ sở lý thuyết và Mô hình hóa hàng đợi}
+\label{sec:mo-hinh}
+\hspace{0.5cm}Nền tảng toán học giải tích của Lý thuyết Hàng đợi (Queueing Theory) giữ vai trò là chuẩn đối chiếu tuyệt đối (Ground Truth) nhằm kiểm chứng và thẩm định độ chính xác của bộ mô phỏng biến cố rời rạc (DES). Khung lý thuyết được xây dựng tuần tự và chặt chẽ qua các cấu phần kỹ thuật cốt lõi:\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Ký hiệu Kendall ($A/S/c/K/N/SD$):} Chuẩn hóa và phân loại cấu trúc hệ thống hàng đợi, dung lượng, nguồn phát và kỷ luật phục vụ.
+
+    \item \textbf{Tiến trình Poisson và Sinh--Tử:} Vận dụng tính không nhớ (Memoryless), xây dựng phương trình cân bằng Markov và xác định phân phối trạng thái dừng $p_0, p_n$.
+
+    \item \textbf{Các định luật tổng quát ($G/G/c$):} Thiết lập điều kiện ổn định $\rho < 1$, Định luật Little ($L = \lambda_{\text{eff}}W$) và quan hệ phân rã $L = L_q + L_s$.
+
+    \item \textbf{Các mô hình hàng đợi giải tích:} Dẫn xuất công thức dạng đóng cho $M/M/1$, $M/M/1/K$, $M/M/\infty$, Erlang-B, Erlang-C, $M/M/c/K$ và đối chứng $M/D/1$.
+
+    \item \textbf{Mạng hàng đợi Jackson 4 trạm:} Giải hệ phương trình lưu lượng, phân tích nút thắt cổ chai (Bottleneck) và áp dụng nghiệm dạng tích độc lập (Product-Form Solution).
+\end{itemize}
+
+\subsection{Tổng quan lý thuyết hàng đợi và Ký hiệu Kendall chuẩn hóa}
+\label{subsec:ly-thuyet-kendall}
+
+\subsubsection{Cấu trúc tổng thể của một hệ thống hàng đợi}
+
+\hspace{0.5cm}Một hệ thống hàng đợi điển hình trong công nghệ máy tính và truyền thông được hợp thành từ 3 thành phần vật lý cơ bản:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Dòng khách hàng (Customer Stream / Arrival Process):} Tập hợp các thực thể (gói tin mạng, luồng I/O, tiến trình tính toán) đến hệ thống theo một quy trình ngẫu nhiên. Thời điểm đến của khách thứ $j$ là $t_j$. Khoảng cách giữa 2 lần đến liên tiếp được xác định bởi biến ngẫu nhiên $\tau_j = t_j - t_{j-1}$. Chuỗi $\{\tau_j\}$ thường được giả định là các biến ngẫu nhiên độc lập và cùng phân phối (IID -- Independent and Identically Distributed).
+    \item \textbf{Hàng đợi và Kỷ luật phục vụ (Queue \& Service Discipline):} Vùng nhớ đệm lưu trữ các yêu cầu chưa thể phục vụ ngay. Kỷ luật phục vụ quy định trật tự lựa chọn khách hàng từ hàng đợi:
+    \begin{itemize}
+        \item \textbf{FCFS (First-Come, First-Served):} Đến trước được phục vụ trước (kỷ luật mặc định trong hầu hết các bộ đệm mạng).
+        \item \textbf{LCFS (Last-Come, First-Served):} Đến sau được phục vụ trước (ứng dụng trong cấu trúc ngăn xếp / stack).
+        \item \textbf{LCFS-PR (LCFS with Preemption and Resume):} Đến sau ngắt quyền phục vụ của khách hiện tại và chiếm dụng máy chủ ngay lập tức.
+        \item \textbf{RR (Round-Robin) \& PS (Processor Sharing):} Phân bổ lát cắt thời gian (Quantum). Khi kích thước quantum tiến về 0, mô hình trở thành chia sẻ bộ vi xử lý đồng thời (PS).
+        \item \textbf{IS (Infinite Server):} Vô hạn máy chủ, mỗi khách đến đều có riêng một máy chủ phục vụ, không bao giờ phải chờ đệm ($W_q = 0$).
+        \item \textbf{SPT / SRPT (Shortest Processing / Remaining Processing Time):} Ưu tiên tác vụ có thời gian thực thi ngắn nhất nhằm tối thiểu hóa độ trễ trung bình.
+    \end{itemize}
+    \item \textbf{Cơ sở phục vụ (Service Facility):} Bao gồm $c$ máy chủ ($c \ge 1$) làm việc song song. Thời gian phục vụ của khách hàng là biến ngẫu nhiên $s$ với kỳ vọng $E[s] = 1/\mu$, tương ứng tốc độ phục vụ $\mu$ trên mỗi máy chủ. Tổng năng lực phục vụ tối đa của trạm là $c\mu$.
+\end{enumerate}
+
+\subsubsection{Hệ thống ký hiệu Kendall mở rộng}
+
+\hspace{0.5cm}Để chuẩn hóa việc phân loại các mô hình hàng đợi, D.~G.~Kendall đã đề xuất ký pháp chuẩn $A/S/c/B/K/SD$ với quy ước ý nghĩa như sau:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{$A$ (Arrival Process):} Phân phối xác suất của khoảng thời gian giữa 2 lần đến liên tiếp ($\tau$).
+    \item \textbf{$S$ (Service Time Distribution):} Phân phối xác suất thời gian phục vụ một yêu cầu ($s$).
+    \item \textbf{$c$ ($m$ -- Number of Servers):} Số lượng máy chủ phục vụ làm việc đồng thời ($c \in \{1, 2, \dots, \infty\}$).
+    \item \textbf{$B$ (System Capacity / Buffer Limit):} Sức chứa tối đa của hệ thống (bao gồm các chỗ đang xử lý trên máy chủ và các vị trí chờ trong bộ đệm). Mặc định $B = \infty$ nếu lược bỏ.
+    \item \textbf{$K$ (Population Size):} Tổng quy mô khách hàng của nguồn phát. Mặc định $K = \infty$ nếu lược bỏ.
+    \item \textbf{$SD$ (Service Discipline):} Kỷ luật phục vụ hàng đợi. Mặc định là FCFS nếu lược bỏ.
+\end{itemize}
+
+Các ký hiệu phân phối xác suất chuẩn bao gồm:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{$M$ (Markovian / Exponential):} Phân phối mũ, tương ứng dòng đến là dòng Poisson có tính chất không nhớ.
+    \item \textbf{$D$ (Deterministic):} Phân phối tất định, thời gian là một hằng số cố định không đổi.
+    \item \textbf{$E_k$ (Erlang-$k$):} Phân phối Erlang bậc $k$, mô hình hóa chuỗi $k$ công đoạn phục vụ nối tiếp có phân phối mũ.
+    \item \textbf{$H_k$ (Hyper-exponential-$k$):} Phân phối siêu mũ, hỗn hợp xác suất của $k$ kênh phân phối mũ độc lập.
+    \item \textbf{$G$ (General):} Phân phối tổng quát bất kỳ (áp dụng đúng cho mọi loại hàm phân phối).
+\end{itemize}
+
+\textit{Ví dụ:} Ký hiệu $M/M/3/20/1500/\text{FCFS}$ đại diện cho hệ thống có thời gian đến và thời gian phục vụ phân phối mũ, gồm $3$ máy chủ, tổng sức chứa $20$ khách ($3$ máy chủ $+ 17$ ghế chờ), quy mô nguồn phát tối đa $1500$ khách và kỷ luật FCFS. Khi lược bỏ các tham số mặc định, ký hiệu $M/M/1$ biểu diễn hệ thống $M/M/1/\infty/\infty/\text{FCFS}$.
+
+\subsubsection{Tính chất không nhớ (Memoryless Property) của phân phối Mũ}
+
+\hspace{0.5cm}Để chuẩn hóa việc phân loại các mô hình hàng đợi, D.~G.~Kendall đã đề xuất ký pháp chuẩn $A/S/c/B/K/SD$ với quy ước ý nghĩa như sau:
+Phân phối mũ là nền tảng toán học duy nhất cho phép mô hình hóa hệ thống bằng chuỗi Markov thời gian liên tục. Một biến ngẫu nhiên $X \ge 0$ tuân theo phân phối mũ với tham số $\lambda$ có hàm phân phối tích lũy (CDF) và hàm mật độ xác suất (PDF) lần lượt là:
+\begin{equation}
+    F(t) = P(X \le t) = 1 - e^{-\lambda t}, \quad f(t) = \lambda e^{-\lambda t} \quad (t \ge 0)
+\end{equation}
+
+\begin{theorempop}[title=\textbf{Định lý: Tính chất không nhớ của phân phối Mũ}]
+Biến ngẫu nhiên $X$ có tính chất không nhớ nếu và chỉ nếu với mọi $s, t \ge 0$:
+\begin{equation}
+    P(X > s + t \mid X > t) = P(X > s)
+\end{equation}
+
+\textbf{Chứng minh:} 
+
+Theo công thức xác suất có điều kiện:
+\begin{equation}
+    P(X > s + t \mid X > t) = \frac{P(\{X > s + t\} \cap \{X > t\})}{P(X > t)} = \frac{P(X > s + t)}{P(X > t)}
+\end{equation}
+Thay biểu thức hàm sống sót $P(X > x) = 1 - F(x) = e^{-\lambda x}$:
+\begin{equation}
+    P(X > s + t \mid X > t) = \frac{e^{-\lambda(s+t)}}{e^{-\lambda t}} = \frac{e^{-\lambda s} \cdot e^{-\lambda t}}{e^{-\lambda t}} = e^{-\lambda s} = P(X > s) \quad \text{(đpcm)}
+\end{equation}
+\end{theorempop}
+
+\textbf{Ý nghĩa kỹ thuật:} 
+
+Tính chất không nhớ khẳng định rằng khoảng thời gian còn lại cho đến khi sự kiện tiếp theo xảy ra hoàn toàn độc lập với lượng thời gian đã trôi qua trong quá khứ. Việc ghi nhớ lịch sử hoạt động không đem lại bất kỳ thông tin nào để dự đoán thời điểm kết thúc phục vụ hay thời điểm khách kế tiếp đến, giúp đơn giản hóa trạng thái hệ thống thành một chuỗi Markov không có biến trễ.
+
+\newpage
+\subsection{Tiến trình ngẫu nhiên và Thuộc tính của dòng Poisson}
+\label{subsec:tien-trinh-poisson}
+
+\subsubsection{Khái niệm tiến trình ngẫu nhiên và Chuỗi Markov}
+
+\hspace{0.5cm}Một tiến trình ngẫu nhiên (Stochastic Process) là một họ các biến ngẫu nhiên $\{X(t), t \in T\}$ biểu diễn sự tiến hóa trạng thái của hệ thống theo trục thời gian $t$.
+\begin{itemize}[leftmargin=1.5em]
+    \item Nếu không gian trạng thái là rời rạc, ký hiệu $n(t) \in \{0, 1, 2, \dots\}$ biểu diễn số lượng khách hàng trong hệ thống tại thời điểm $t$ $\to$ \textbf{Tiến trình trạng thái rời rạc (Discrete-state process)}.
+    \item Nếu không gian trạng thái là liên tục, ký hiệu $w(t) \in [0, \infty)$ biểu diễn thời gian chờ $\to$ \textbf{Tiến trình trạng thái liên tục (Continuous-state process)}.
+    \item \textbf{Tiến trình Markov (Markov Process):} Là tiến trình mà trạng thái tương lai chỉ phụ thuộc duy nhất vào trạng thái hiện tại, hoàn toàn độc lập với toàn bộ quỹ đạo quá khứ:
+    \begin{equation}
+        P(X(t_{k+1}) = x_{k+1} \mid X(t_k) = x_k, \dots, X(t_0) = x_0) = P(X(t_{k+1}) = x_{k+1} \mid X(t_k) = x_k)
+    \end{equation}
+    Một tiến trình Markov có không gian trạng thái rời rạc được gọi là \textbf{Chuỗi Markov (Markov Chain)}.
+\end{itemize}
+
+\subsubsection{Đặc trưng và 5 thuộc tính cốt lõi của Dòng Poisson}
+
+\hspace{0.5cm}Khi khoảng thời gian liên đến $\tau$ là các biến ngẫu nhiên IID phân phối mũ tham số $\lambda$, số lượng yêu cầu $k$ xuất hiện trong khoảng thời gian có độ dài $t$ tuân theo phân phối Poisson:
+\begin{equation}
+    P\{N(t) = k\} = \frac{(\lambda t)^k}{k!} e^{-\lambda t}, \quad k = 0, 1, 2, \dots
+\end{equation}
+
+Trong lý thuyết hàng đợi và mô hình hóa mạng, dòng Poisson sở hữu 5 thuộc tính toán học then chốt:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Thuộc tính gộp dòng (Merging Property):} Hợp của $m$ dòng Poisson độc lập có tốc độ lần lượt là $\lambda_1, \lambda_2, \dots, \lambda_m$ tạo thành một dòng Poisson duy nhất với tốc độ tổng hợp bằng tổng các tốc độ thành phần:
+    \begin{equation}
+        \lambda = \sum_{i=1}^m \lambda_i
+    \end{equation}
+    \item \textbf{Thuộc tính tách dòng (Splitting Property):} Nếu một dòng Poisson tốc độ $\lambda$ được phân chia ngẫu nhiên vào $m$ nhánh con với xác suất tương ứng $p_1, p_2, \dots, p_m$ ($\sum p_i = 1$), thì mỗi dòng con $i$ cũng là một dòng Poisson độc lập với tốc độ:
+    \begin{equation}
+        \lambda_i = p_i \cdot \lambda
+    \end{equation}
+    \item \textbf{Thuộc tính co giãn thời gian (Scaling Property):} Nếu khoảng thời gian $\tau$ được nhân với hệ số co giãn $c > 0$, biến ngẫu nhiên $c\tau$ vẫn tuân theo phân phối mũ với tốc độ điều chỉnh bằng $\lambda / c$.
+    \item \textbf{Định lý Burke (Burke's Theorem):} Đối với một trạm hàng đợi $M/M/c$ ở trạng thái dừng với tốc độ đến $\lambda < c\mu$, luồng các yêu cầu rời khỏi trạm (Departure Process) cũng chính là một dòng Poisson thuần nhất có tốc độ đúng bằng $\lambda$. Hơn nữa, tại bất kỳ thời điểm $t$, số lượng khách đang có mặt trong hệ thống độc lập với chuỗi các thời điểm rời đi trước thời điểm $t$.
+    \item \textbf{Dòng ra của hệ thống đa máy chủ:} Khi dòng vào một cụm $m$ máy chủ là Poisson tốc độ $\lambda$ và các máy chủ có thời gian phục vụ phân phối mũ tốc độ $\mu_i$, dòng ra tổng hợp vẫn là dòng Poisson với tốc độ $\lambda$, với điều kiện ổn định $\lambda < \sum_{i=1}^m \mu_i$.
+\end{enumerate}
+
+\subsection{Tiến trình Sinh-Tử (Birth-Death Processes) và Cân bằng dừng}
+\label{subsec:sinh-tu}
+
+\subsubsection{Mô hình toán học của Tiến trình Sinh-Tử}
+
+\hspace{0.5cm}Tiến trình Sinh-Tử (Birth-Death Process) là trường hợp đặc biệt của chuỗi Markov thời gian liên tục, trong đó các bước chuyển trạng thái chỉ giới hạn giữa các trạng thái lân cận:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Sự kiện Sinh (Birth / Arrival):} Làm số lượng khách trong hệ thống tăng thêm 1 đơn vị ($n \to n+1$) với tốc độ chuyển dịch $\lambda_n$.
+    \item \textbf{Sự kiện Tử (Death / Departure):} Khách hoàn tất dịch vụ rời khỏi hệ thống, làm giảm số lượng khách đi 1 đơn vị ($n \to n-1$) với tốc độ chuyển dịch $\mu_n$.
+\end{itemize}
+
+Sơ đồ chuyển dịch trạng thái toàn cục của tiến trình Sinh-Tử được mô tả trong Hình~\ref{fig:birth-death-chain}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[->, >=stealth', auto, node distance=2.2cm, semithick,
+    state/.style={circle, draw=bkblue, fill=boxbg, line width=1pt, minimum size=1.1cm, font=\small\bfseries}]
+    
+    \node[state] (S0) {$0$};
+    \node[state] (S1) [right of=S0] {$1$};
+    \node[state] (S2) [right of=S1] {$2$};
+    \node[state, draw=none, fill=none] (SDots) [right of=S2] {$\cdots$};
+    \node[state] (Sn) [right of=SDots] {$n$};
+    \node[state] (Sn1) [right of=Sn] {$n+1$};
+    \node[state, draw=none, fill=none] (SEnd) [right of=Sn1] {$\cdots$};
+
+    \path (S0) edge [bend left=25] node [above] {$\lambda_0$} (S1)
+          (S1) edge [bend left=25] node [below] {$\mu_1$} (S0)
+          (S1) edge [bend left=25] node [above] {$\lambda_1$} (S2)
+          (S2) edge [bend left=25] node [below] {$\mu_2$} (S1)
+          (S2) edge [bend left=25] node [above] {$\lambda_2$} (SDots)
+          (SDots) edge [bend left=25] node [below] {$\mu_3$} (S2)
+          (SDots) edge [bend left=25] node [above] {$\lambda_{n-1}$} (Sn)
+          (Sn) edge [bend left=25] node [below] {$\mu_n$} (SDots)
+          (Sn) edge [bend left=25] node [above] {$\lambda_n$} (Sn1)
+          (Sn1) edge [bend left=25] node [below] {$\mu_{n+1}$} (Sn)
+          (Sn1) edge [bend left=25] node [above] {$\lambda_{n+1}$} (SEnd)
+          (SEnd) edge [bend left=25] node [below] {$\mu_{n+2}$} (Sn1);
+\end{tikzpicture}
+\caption{Sơ đồ chuyển dịch tốc độ trạng thái trong Tiến trình Sinh-Tử tổng quát}
+\label{fig:birth-death-chain}
+\end{figure}
+
+\subsubsection{Phương trình cân bằng dòng toàn cục và Nghiệm xác suất dừng}
+
+\hspace{0.5cm}Ở trạng thái cân bằng thống kê (Steady State), nguyên lý bảo toàn lưu lượng yêu cầu: \textit{Tốc độ chuyển dịch rời khỏi một tập trạng thái phải bằng tốc độ chuyển dịch đi vào tập trạng thái đó}.
+
+Thiết lập phương trình cân bằng trên vết cắt giữa hai trạng thái lân cận $n-1$ và $n$:
+\begin{equation}
+    \lambda_{n-1} p_{n-1} = \mu_n p_n \implies p_n = \frac{\lambda_{n-1}}{\mu_n} p_{n-1}
+\end{equation}
+
+Bằng phương pháp truy hồi liên tiếp từ trạng thái rỗng $p_0$:
+\begin{align}
+    p_1 &= \frac{\lambda_0}{\mu_1} p_0 \\
+    p_2 &= \frac{\lambda_1}{\mu_2} p_1 = \frac{\lambda_0 \lambda_1}{\mu_1 \mu_2} p_0 \\
+    p_n &= \left( \prod_{i=0}^{n-1} \frac{\lambda_i}{\mu_{i+1}} \right) p_0, \quad n = 1, 2, \dots, \infty
+    \label{eq:steady-state-pn}
+\end{align}
+
+Để tìm xác suất hệ thống rỗng $p_0$, áp dụng điều kiện chuẩn hóa tổng xác suất trên toàn không gian trạng thái bằng 1:
+\begin{equation}
+    \sum_{n=0}^\infty p_n = 1 \implies p_0 \left[ 1 + \sum_{n=1}^\infty \left( \prod_{i=0}^{n-1} \frac{\lambda_i}{\mu_{i+1}} \right) \right] = 1
+\end{equation}
+
+Từ đó suy ra biểu thức tổng quát của $p_0$:
+\begin{equation}
+    p_0 = \left[ 1 + \sum_{n=1}^\infty \left( \prod_{i=0}^{n-1} \frac{\lambda_i}{\mu_{i+1}} \right) \right]^{-1}
+    \label{eq:p0-general}
+\end{equation}
+
+Hệ thống tồn tại phân phối dừng ổn định khi và chỉ khi chuỗi vô hạn trong mẫu số của \eqref{eq:p0-general} hội tụ.
+
+\subsection{Các nguyên lý phổ quát cho mọi hệ thống hàng đợi (\texorpdfstring{$G/G/c$}{G/G/c} Rules)}
+\label{subsec:rules-all-queues}
+
+\hspace{0.5cm}Các định luật sau đây có giá trị phổ quát cho mọi hệ thống hàng đợi Kendall dạng $G/G/c$, độc lập với loại hàm phân phối của thời gian đến và thời gian phục vụ:
+
+\subsubsection{Điều kiện ổn định hệ thống (Stability Condition)}
+Đối với hệ thống có bộ đệm vô hạn ($B = \infty$), điều kiện cần và đủ để hệ thống không bị tràn vô hạn là tốc độ đến phải nhỏ hơn tổng tốc độ phục vụ tối đa của các máy chủ:
+\begin{equation}
+    \lambda < c \cdot \mu \iff \rho = \frac{\lambda}{c\mu} < 1
+\end{equation}
+
+Các hệ thống có kích thước nguồn phát hữu hạn ($K < \infty$) hoặc có dung lượng đệm hữu hạn ($B < \infty$) luôn luôn ổn định ở mọi giá trị $\lambda$ vì các yêu cầu vượt ngưỡng sẽ bị chặn hoặc nguồn phát bị cạn kiệt.
+
+\subsubsection{Quan hệ số lượng trong hệ thống và hàng đợi}
+\hspace{0.5cm}Tại bất kỳ thời điểm nào, tổng số khách hàng trong hệ thống ($n$) bằng số khách đang chờ trong hàng đợi ($n_q$) cộng số khách đang được phục vụ tại các máy chủ ($n_s$):
+\begin{equation}
+    n = n_q + n_s \implies E[n] = E[n_q] + E[n_s] \iff L = L_q + L_s
+\end{equation}
+
+Nếu tốc độ phục vụ của máy chủ độc lập với số lượng yêu cầu đang chờ trong hàng đợi, thì hiệp phương sai $\text{Cov}(n_q, n_s) = 0$, dẫn đến quan hệ cộng phương sai:
+
+\begin{equation}
+    \text{Var}[n] = \text{Var}[n_q] + \text{Var}[n_s]
+\end{equation}
+
+\subsubsection{Định luật Little (Little's Law, Little 1961)}
+\begin{theorempop}[title=\textbf{Định luật Little}]
+Đối với bất kỳ hệ thống hàng đợi nào đạt trạng thái dừng với tốc độ đến trung bình $\lambda$:
+\begin{equation}
+    L = \lambda \cdot W \iff E[n] = \lambda \cdot E[r]
+\end{equation}
+\end{theorempop}
+Định luật Little áp dụng được cho toàn bộ hệ thống hoặc cho bất kỳ phân hệ con độc lập nào:
+\begin{itemize}[leftmargin=1.5em]
+    \item Áp dụng cho vùng hàng đợi: $L_q = \lambda \cdot W_q \iff E[n_q] = \lambda \cdot E[w]$.
+    \item Áp dụng cho cụm máy chủ phục vụ: $L_s = \lambda \cdot E[s] = \frac{\lambda}{\mu} = c\rho$.
+\end{itemize}
+
+\textit{Lưu ý quan trọng:} 
+
+Trong các hệ thống có hiện tượng mất gói ($M/M/1/K$, $M/M/c/K$), biến $\lambda$ trong định luật Little phải được thay thế bằng thông lượng hiệu dụng thực tế đi vào hệ thống: $\lambda_{\text{eff}} = \lambda(1 - P_b)$.
+
+\subsubsection{Quan hệ thời gian lưu trú và thời gian chờ}
+\hspace{0.5cm}Thời gian một khách hàng lưu lại trong trạm phục vụ ($r$) bằng thời gian chờ trong hàng đợi ($w$) cộng thời gian được máy chủ phục vụ ($s$):
+
+\begin{equation}
+    r = w + s \implies E[r] = E[w] + E[s] \iff W = W_q + \frac{1}{\mu}
+\end{equation}
+
+Nếu thời gian phục vụ $s$ độc lập với thời gian chờ $w$ ($\text{Cov}(w, s) = 0$):
+\begin{equation}
+    \text{Var}[r] = \text{Var}[w] + \text{Var}[s]
+\end{equation}
+
+\subsection{Phân tích chi tiết 6 mô hình hàng đợi đơn chuẩn hóa và mô hình \texorpdfstring{$M/D/1$}{M/D/1}}
+\label{subsec:chi-tiet-cac-mo-hinh}
+
+
+% -------------------------------------------------------------
+% MODEL 1: M/M/1
+% -------------------------------------------------------------
+\subsubsection{Mô hình \texorpdfstring{$M/M/1$}{M/M/1}: Hệ thống đơn máy chủ, bộ đệm vô hạn}
+
+\hspace{0.5cm}Mô hình $M/M/1$ giả định dòng đến là dòng Poisson tốc độ $\lambda$, thời gian phục vụ phân phối mũ với tham số $\mu$, 1 máy chủ duy nhất ($c=1$), bộ đệm và nguồn phát vô hạn ($B=\infty, K=\infty$), kỷ luật FCFS.
+
+\textbf{Phương trình cân bằng dừng:}
+
+Với mọi trạng thái $n$, tốc độ sinh và tử là hằng số: $\lambda_n = \lambda$ ($n \ge 0$) và $\mu_n = \mu$ ($n \ge 1$). Đặt hệ số tải trọng $\rho = \lambda / \mu$. Áp dụng \eqref{eq:steady-state-pn}:
+\begin{equation}
+    p_n = \left(\frac{\lambda}{\mu}\right)^n p_0 = \rho^n p_0
+\end{equation}
+
+Sử dụng điều kiện chuẩn hóa với chuỗi cấp số nhân khi $\rho < 1$:
+\begin{equation}
+    \sum_{n=0}^\infty p_n = p_0 \sum_{n=0}^\infty \rho^n = \frac{p_0}{1 - \rho} = 1 \implies p_0 = 1 - \rho
+\end{equation}
+
+Do đó, phân phối xác suất số lượng khách trong hệ thống có dạng:
+\begin{equation}
+    p_n = (1 - \rho)\rho^n, \quad n = 0, 1, 2, \dots
+\end{equation}
+
+\textbf{Dẫn xuất các chỉ số hiệu năng:}
+\begin{itemize}[leftmargin=1.5em]
+    \item Số lượng khách trung bình trong hệ thống ($L = E[n]$):
+    \begin{equation}
+        L = \sum_{n=0}^\infty n p_n = (1 - \rho)\sum_{n=0}^\infty n \rho^n = (1 - \rho) \frac{\rho}{(1 - \rho)^2} = \frac{\rho}{1 - \rho} = \frac{\lambda}{\mu - \lambda}
+    \end{equation}
+    \item Phương sai số lượng khách trong hệ thống:
+    \begin{equation}
+        \text{Var}[n] = E[n^2] - (E[n])^2 = \frac{\rho}{(1 - \rho)^2}
+    \end{equation}
+    \item Thời gian đáp ứng trung bình ($W = E[r]$): Theo định luật Little $L = \lambda W$:
+    \begin{equation}
+        W = \frac{L}{\lambda} = \frac{1}{\mu(1 - \rho)} = \frac{1}{\mu - \lambda}
+    \end{equation}
+    \item Thời gian chờ trung bình trong hàng đợi ($W_q = E[w]$):
+    \begin{equation}
+        W_q = W - \frac{1}{\mu} = \frac{1}{\mu - \lambda} - \frac{1}{\mu} = \frac{\lambda}{\mu(\mu - \lambda)} = \frac{\rho}{\mu(1 - \rho)}
+    \end{equation}
+    \item Số lượng khách trung bình trong hàng đợi ($L_q = E[n_q]$):
+    \begin{equation}
+        L_q = \lambda W_q = \frac{\lambda^2}{\mu(\mu - \lambda)} = \frac{\rho^2}{1 - \rho} = L - \rho
+    \end{equation}
+    \item Hàm phân phối tích lũy của thời gian đáp ứng $r$ và thời gian chờ $w$:
+    \begin{align}
+        F(r) &= 1 - e^{-r\mu(1-\rho)}, \quad r \ge 0 \\
+        F(w) &= 1 - \rho e^{-w\mu(1-\rho)}, \quad w \ge 0
+    \end{align}
+    \item Bách phân vị thứ $q$ ($q$-percentile, ví dụ $q=90$ hoặc $q=95$):
+    \begin{equation}
+        r_q = \frac{1}{\mu(1 - \rho)} \ln\left(\frac{100}{100 - q}\right), \quad w_q = \max\left\{0, \; \frac{1}{\mu(1 - \rho)} \ln\left(\frac{100\rho}{100 - q}\right)\right\}
+    \end{equation}
+\end{itemize}
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/M/1$}
+\begin{align*}
+    &\textbf{Điều kiện ổn định:} && \rho = \frac{\lambda}{\mu} < 1, \quad c = 1, \quad B = \infty \\[4pt]
+    &\textbf{Phân phối trạng thái dừng:} && p_0 = 1 - \rho, \qquad p_n = (1 - \rho)\rho^n \\[4pt]
+    &\textbf{Số khách trong hệ thống:} && L = \frac{\rho}{1 - \rho} = \frac{\lambda}{\mu - \lambda}, \qquad L_q = \frac{\rho^2}{1 - \rho} \\[4pt]
+    &\textbf{Thời gian đáp ứng \& chờ:} && W = \frac{1}{\mu - \lambda}, \qquad W_q = \frac{\rho}{\mu - \lambda} = \frac{\lambda}{\mu(\mu - \lambda)} \\[4pt]
+    &\textbf{Xác suất có $\ge k$ khách:} && P(n \ge k) = \sum_{j=k}^\infty p_j = \rho^k
+\end{align*}
+\end{modelbox}
+
+% -------------------------------------------------------------
+% MODEL 2: M/M/1/K
+% -------------------------------------------------------------
+\subsubsection{Mô hình \texorpdfstring{$M/M/1/K$}{M/M/1/K}: Hệ thống đơn máy chủ, dung lượng đệm hữu hạn}
+
+\hspace{0.5cm}Hệ thống có 1 máy chủ, tổng dung lượng tối đa là $K$ khách (1 khách đang được phục vụ và $K-1$ chỗ chờ trong bộ đệm). Khi hệ thống đạt $K$ khách, mọi yêu cầu tiếp theo đến sẽ bị từ chối và hủy bỏ ngay lập tức (Drop / Loss).
+
+\textbf{Phương trình cân bằng dừng:}
+
+Không gian trạng thái hữu hạn $\{0, 1, 2, \dots, K\}$. Tốc độ chuyển dịch:
+\begin{equation}
+    \lambda_n = \begin{cases} \lambda & \text{khi } 0 \le n < K \\ 0 & \text{khi } n \ge K \end{cases}, \qquad \mu_n = \mu \quad (1 \le n \le K)
+\end{equation}
+
+Xác suất trạng thái có dạng: $p_n = \rho^n p_0$ ($0 \le n \le K$). Chuẩn hóa tổng xác suất:
+\begin{equation}
+    \sum_{n=0}^K p_n = p_0 \sum_{n=0}^K \rho^n = p_0 \frac{1 - \rho^{K+1}}{1 - \rho} = 1 \implies p_0 = \frac{1 - \rho}{1 - \rho^{K+1}} \quad (\text{với } \rho \neq 1)
+\end{equation}
+
+Khi $\rho = 1$, phân phối trở thành đều: $p_n = \frac{1}{K+1}$.
+
+\textbf{Dẫn xuất các chỉ số hiệu năng:}
+\begin{itemize}[leftmargin=1.5em]
+    \item Xác suất chặn / Mất gói do đầy bộ đệm ($P_b$):
+    \begin{equation}
+        P_b = p_K = \frac{(1 - \rho)\rho^K}{1 - \rho^{K+1}}
+    \end{equation}
+    \item Thông lượng hiệu dụng thực tế ($\lambda_{\text{eff}}$):
+    \begin{equation}
+        \lambda_{\text{eff}} = \lambda (1 - P_b) = \lambda (1 - p_K)
+    \end{equation}
+    \item Số lượng khách trung bình trong hệ thống ($L$):
+    \begin{equation}
+        L = \sum_{n=0}^K n p_n = \frac{\rho}{1 - \rho} - \frac{(K+1)\rho^{K+1}}{1 - \rho^{K+1}}
+    \end{equation}
+    \item Thời gian đáp ứng trung bình ($W$) và thời gian chờ ($W_q$):
+    \begin{equation}
+        W = \frac{L}{\lambda_{\text{eff}}} = \frac{L}{\lambda(1 - P_b)}, \quad W_q = W - \frac{1}{\mu}, \quad L_q = \lambda_{\text{eff}} W_q = L - (1 - p_0)
+    \end{equation}
+\end{itemize}
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/M/1/K$}
+\begin{align*}
+    &\textbf{Tham số:} && c = 1, \quad \text{Sức chứa: } K, \quad \text{Không gian trạng thái: } n \in \{0, 1, \dots, K\} \\[4pt]
+    &\textbf{Xác suất rỗng } p_0\textbf{:} && p_0 = \frac{1 - \rho}{1 - \rho^{K+1}} \quad (\text{nếu } \rho = 1 \text{ thì } p_0 = \frac{1}{K+1}) \\[4pt]
+    &\textbf{Phân phối trạng thái dừng:} && p_n = \frac{(1 - \rho)\rho^n}{1 - \rho^{K+1}}, \quad 0 \le n \le K \\[4pt]
+    &\textbf{Xác suất mất gói (Chặn):} && P_b = p_K = \frac{(1 - \rho)\rho^K}{1 - \rho^{K+1}} \\[4pt]
+    &\textbf{Thông lượng hiệu dụng:} && \lambda_{\text{eff}} = \lambda(1 - P_b) \\[4pt]
+    &\textbf{Số khách trong hệ thống:} && L = \frac{\rho}{1 - \rho} - \frac{(K+1)\rho^{K+1}}{1 - \rho^{K+1}} \\[4pt]
+    &\textbf{Chỉ số thời gian (Little):} && W = \frac{L}{\lambda_{\text{eff}}}, \qquad W_q = W - \frac{1}{\mu}, \qquad L_q = \lambda_{\text{eff}} W_q
+\end{align*}
+\end{modelbox}
+
+% -------------------------------------------------------------
+% MODEL 3: M/M/inf
+% -------------------------------------------------------------
+\subsubsection{Mô hình \texorpdfstring{$M/M/\infty$}{M/M/inf}: Hệ thống vô hạn máy chủ (Pure Delay System)}
+
+\hspace{0.5cm}Mô hình $M/M/\infty$ đại diện cho trạm phục vụ tự do (\textit{Self-service facility}) hoặc trạm có độ trễ cố định (Fixed delay network link). Mỗi khi có một yêu cầu đến, hệ thống luôn sẵn sàng cấp phát một máy chủ mới để phục vụ ngay lập tức. Khách hàng không bao giờ phải chờ trong hàng đợi ($W_q = 0, L_q = 0$).
+
+\textbf{Phương trình cân bằng dừng:}
+
+Tốc độ sinh là hằng số $\lambda_n = \lambda$ ($n \ge 0$). Vì có $n$ khách đang được phục vụ đồng thời bởi $n$ máy chủ độc lập, tốc độ kết thúc phục vụ tổng hợp tỷ lệ thuận với số khách: $\mu_n = n\mu$ ($n \ge 1$). Áp dụng \eqref{eq:steady-state-pn} với tải đề nghị $a = \lambda / \mu$:
+\begin{equation}
+    p_n = p_0 \prod_{i=0}^{n-1} \frac{\lambda}{(i+1)\mu} = p_0 \frac{(\lambda/\mu)^n}{n!} = p_0 \frac{a^n}{n!}
+\end{equation}
+
+Chuẩn hóa tổng xác suất:
+\begin{equation}
+    \sum_{n=0}^\infty p_n = p_0 \sum_{n=0}^\infty \frac{a^n}{n!} = p_0 e^a = 1 \implies p_0 = e^{-a} = e^{-\lambda/\mu}
+\end{equation}
+
+Phân phối số lượng khách trong hệ thống chính là \textbf{phân phối Poisson} tham số $a$:
+\begin{equation}
+    p_n = \frac{a^n}{n!} e^{-a} = \frac{(\lambda/\mu)^n}{n!} e^{-\lambda/\mu}, \quad n = 0, 1, 2, \dots
+\end{equation}
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/M/\infty$}
+\begin{align*}
+    &\textbf{Tham số:} && c = \infty, \quad B = \infty, \quad \text{Tải đề nghị: } a = \frac{\lambda}{\mu} \\[4pt]
+    &\textbf{Phân phối trạng thái dừng:} && p_n = \frac{a^n}{n!} e^{-a}, \qquad p_0 = e^{-a} \\[4pt]
+    &\textbf{Số khách trong hệ thống:} && L = E[n] = a = \frac{\lambda}{\mu}, \qquad \text{Var}[n] = a \\[4pt]
+    &\textbf{Chỉ số hàng đợi:} && L_q = 0, \qquad W_q = 0 \\[4pt]
+    &\textbf{Thời gian đáp ứng:} && W = E[s] = \frac{1}{\mu}
+\end{align*}
+\end{modelbox}
+
+\newpage
+% -------------------------------------------------------------
+% MODEL 4: M/M/n/n
+% -------------------------------------------------------------
+\subsubsection{Mô hình \texorpdfstring{$M/M/n/n$}{M/M/n/n}: Hệ thống Erlang-B tổn thất (Loss System)}
+
+\hspace{0.5cm}Hệ thống gồm $n$ máy chủ làm việc song song nhưng hoàn toàn \textbf{không có bộ đệm chờ} ($B = n$). Khi một khách hàng đến, nếu có ít nhất một máy chủ rảnh rỗi, khách được tiếp nhận phục vụ ngay. Nếu toàn bộ $n$ máy chủ đều bận, yêu cầu bị từ chối và chặn mất gói ngay lập tức. Đây là mô hình kinh điển do A.~K.~Erlang phát triển cho mạng điện thoại thoại cổ điển.
+
+\textbf{Phương trình cân bằng dừng:}
+
+Không gian trạng thái gồm $n+1$ mức: $\{0, 1, \dots, n\}$.
+\begin{equation}
+    \lambda_k = \begin{cases} \lambda & \text{khi } 0 \le k < n \\ 0 & \text{khi } k \ge n \end{cases}, \qquad \mu_k = k\mu \quad (1 \le k \le n)
+\end{equation}
+
+Biểu thức xác suất trạng thái:
+\begin{equation}
+    p_k = p_0 \frac{(\lambda/\mu)^k}{k!} = p_0 \frac{a^k}{k!} \quad (0 \le k \le n)
+\end{equation}
+
+Chuẩn hóa tổng xác suất bằng 1:
+\begin{equation}
+    \sum_{k=0}^n p_k = p_0 \sum_{k=0}^n \frac{a^k}{k!} = 1 \implies p_0 = \left[ \sum_{k=0}^n \frac{a^k}{k!} \right]^{-1}
+\end{equation}
+
+Từ đó suy ra phân phối xác suất dừng:
+\begin{equation}
+    p_k = \frac{\dfrac{a^k}{k!}}{\displaystyle\sum_{i=0}^n \dfrac{a^i}{i!}}, \quad k = 0, 1, \dots, n
+\end{equation}
+
+\textbf{Công thức mất gói Erlang-B (Erlang's Loss Formula):}
+
+Xác suất chặn dịch vụ chính là xác suất toàn bộ $n$ máy chủ đều bận ($p_n$):
+\begin{equation}
+    P_b = B(n, a) = p_n = \frac{\dfrac{a^n}{n!}}{\displaystyle\sum_{i=0}^n \dfrac{a^i}{i!}}
+    \label{eq:erlang-b-formula}
+\end{equation}
+
+\textbf{Giải thuật tính toán đệ quy ổn định số học (Numerically Stable Recursion):}
+
+Khi $n$ lớn hoặc $a$ lớn, việc tính toán trực tiếp $a^n / n!$ sẽ dẫn đến lỗi tràn số dấu phẩy động (\textit{Overflow}). Trong mã nguồn phần mềm mô phỏng, công thức truy hồi sau được áp dụng:
+\begin{equation}
+    B(0, a) = 1, \qquad B(k, a) = \frac{a \cdot B(k-1, a)}{k + a \cdot B(k-1, a)} \quad \text{với } k = 1, 2, \dots, n
+    \label{eq:erlang-b-recursion}
+\end{equation}
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/M/n/n$ (Erlang-B)}
+\begin{align*}
+    &\textbf{Tham số:} && c = n, \quad \text{Sức chứa: } B = n \text{ (0 chỗ chờ đệm)}, \quad a = \frac{\lambda}{\mu} \\[4pt]
+    &\textbf{Phân phối trạng thái dừng:} && p_k = \frac{a^k / k!}{\sum_{i=0}^n a^i / i!}, \quad 0 \le k \le n \\[4pt]
+    &\textbf{Xác suất chặn Erlang-B:} && P_b = B(n, a) = p_n = \frac{a^n / n!}{\sum_{i=0}^n a^i / i!} \\[4pt]
+    &\textbf{Thuật toán đệ quy ổn định:} && B(k, a) = \frac{a B(k-1, a)}{k + a B(k-1, a)}, \quad B(0, a) = 1 \\[4pt]
+    &\textbf{Tải phục vụ thực tế:} && A_c = a(1 - P_b) = L \\[4pt]
+    &\textbf{Chỉ số hàng đợi \& thời gian:} && L_q = 0, \qquad W_q = 0, \qquad W = \frac{1}{\mu}
+\end{align*}
+\end{modelbox}
+
+% -------------------------------------------------------------
+% MODEL 5: M/M/c
+% -------------------------------------------------------------
+\subsubsection{Mô hình \texorpdfstring{$M/M/c$}{M/M/c}: Hệ thống đa máy chủ, bộ đệm vô hạn (Erlang-C Delay)}
+
+\hspace{0.5cm}Hệ thống có $c$ máy chủ giống nhau ($c \ge 2$) cùng chia sẻ một hàng đợi chung vô hạn ($B = \infty$). Khách đến theo dòng Poisson tốc độ $\lambda$. Tốc độ phục vụ của mỗi máy chủ là $\mu$.
+
+\textbf{Phương trình cân bằng dừng:}
+
+Tốc độ sinh $\lambda_n = \lambda$ với mọi $n \ge 0$. Tốc độ kết thúc phục vụ phụ thuộc vào số máy chủ đang hoạt động:
+\begin{equation}
+    \mu_n = \begin{cases} n\mu & \text{khi } 1 \le n < c \\ c\mu & \text{khi } n \ge c \end{cases}
+\end{equation}
+
+Hệ số cường độ tải: $\rho = \frac{\lambda}{c\mu} < 1$. Tải đề nghị: $a = \frac{\lambda}{\mu} = c\rho$.
+Áp dụng \eqref{eq:steady-state-pn}, biểu thức xác suất trạng thái là:
+\begin{equation}
+    p_n = \begin{cases}
+        \dfrac{a^n}{n!} p_0 = \dfrac{(c\rho)^n}{n!} p_0 & \text{khi } 0 \le n < c \\[8pt]
+        \dfrac{a^n}{c! c^{n-c}} p_0 = \dfrac{c^c \rho^n}{c!} p_0 & \text{khi } n \ge c
+    \end{cases}
+\end{equation}
+
+Xác định xác suất hệ thống rỗng $p_0$ từ điều kiện $\sum_{n=0}^\infty p_n = 1$:
+\begin{equation}
+    p_0 = \left[ \sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \sum_{n=c}^\infty \frac{(c\rho)^c}{c!} \rho^{n-c} \right]^{-1} = \left[ \sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \frac{(c\rho)^c}{c!(1 - \rho)} \right]^{-1}
+    \label{eq:mmc-p0}
+\end{equation}
+
+\textbf{Công thức trễ Erlang-C (Erlang's Delay Formula):}
+
+Xác suất một yêu cầu mới đến thấy tất cả $c$ máy chủ đều bận và buộc phải xếp hàng chờ trong bộ đệm ($P(W_q > 0) = P(n \ge c)$):
+\begin{equation}
+    C(c, a) = \sum_{n=c}^\infty p_n = \frac{(c\rho)^c}{c!(1 - \rho)} p_0 = \frac{\dfrac{(c\rho)^c}{c!(1 - \rho)}}{\displaystyle\sum_{k=0}^{c-1}\frac{(c\rho)^k}{k!} + \frac{(c\rho)^c}{c!(1 - \rho)}}
+    \label{eq:erlang-c-formula}
+\end{equation}
+
+\textbf{Các chỉ số hiệu năng:}
+\begin{itemize}[leftmargin=1.5em]
+    \item Số lượng khách trung bình trong hàng đợi ($L_q$):
+    \begin{equation}
+        L_q = \sum_{n=c}^\infty (n - c) p_n = \frac{\rho}{1 - \rho} C(c, a)
+    \end{equation}
+    \item Thời gian chờ trung bình trong hàng đợi ($W_q$):
+    \begin{equation}
+        W_q = \frac{L_q}{\lambda} = \frac{C(c, a)}{c\mu - \lambda}
+    \end{equation}
+    \item Thời gian đáp ứng trung bình ($W$) và tổng số khách trong hệ thống ($L$):
+    \begin{equation}
+        W = W_q + \frac{1}{\mu} = \frac{C(c, a)}{c\mu - \lambda} + \frac{1}{\mu}, \qquad L = \lambda W = L_q + \frac{\lambda}{\mu} = L_q + c\rho
+    \end{equation}
+\end{itemize}
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/M/c$ (Erlang-C)}
+\begin{align*}
+    &\textbf{Điều kiện ổn định:} && \rho = \frac{\lambda}{c\mu} < 1, \quad a = \frac{\lambda}{\mu} = c\rho, \quad B = \infty \\[4pt]
+    &\textbf{Xác suất rỗng } p_0\textbf{:} && p_0 = \left[ \sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \frac{(c\rho)^c}{c!(1 - \rho)} \right]^{-1} \\[4pt]
+    &\textbf{Xác suất chờ Erlang-C:} && C(c, a) = \frac{(c\rho)^c}{c!(1 - \rho)} p_0 \\[4pt]
+    &\textbf{Thời gian chờ trong hàng đợi:} && W_q = \frac{C(c, a)}{c\mu - \lambda} \\[4pt]
+    &\textbf{Thời gian đáp ứng:} && W = W_q + \frac{1}{\mu} = \frac{C(c, a)}{c\mu - \lambda} + \frac{1}{\mu} \\[4pt]
+    &\textbf{Số khách trong hệ thống:} && L_q = \frac{\rho}{1 - \rho} C(c, a), \qquad L = L_q + c\rho
+\end{align*}
+\end{modelbox}
+
+\newpage
+% -------------------------------------------------------------
+% MODEL 6: M/M/c/K
+% -------------------------------------------------------------
+\subsubsection{Mô hình \texorpdfstring{$M/M/c/K$}{M/M/c/K}: Hệ thống đa máy chủ, dung lượng đệm hữu hạn}
+
+\hspace{0.5cm}Mô hình tổng quát gồm $c$ máy chủ phục vụ song song với tổng sức chứa tối đa là $K$ khách ($K \ge c$). Bộ đệm có $K - c$ vị trí chờ. Khi hệ thống có đúng $K$ khách, mọi yêu cầu tiếp theo sẽ bị loại bỏ ($P_b = p_K$).
+
+\textbf{Phương trình cân bằng dừng:}
+
+Không gian trạng thái hữu hạn $\{0, 1, 2, \dots, K\}$. Tốc độ chuyển dịch:
+\begin{equation}
+    \lambda_n = \begin{cases} \lambda & \text{khi } 0 \le n < K \\ 0 & \text{khi } n \ge K \end{cases}, \qquad \mu_n = \begin{cases} n\mu & \text{khi } 1 \le n \le c \\ c\mu & \text{khi } c < n \le K \end{cases}
+\end{equation}
+
+Phân phối xác suất trạng thái dừng:
+\begin{equation}
+    p_n = \begin{cases}
+        \dfrac{(c\rho)^n}{n!} p_0 & \text{khi } 0 \le n \le c \\[8pt]
+        \dfrac{c^c \rho^n}{c!} p_0 & \text{khi } c < n \le K
+    \end{cases}
+\end{equation}
+
+với $\rho = \frac{\lambda}{c\mu}$. Xác định $p_0$ từ điều kiện $\sum_{n=0}^K p_n = 1$:
+\begin{equation}
+    p_0 = \left[ \sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \frac{(c\rho)^c}{c!} \sum_{n=c}^K \rho^{n-c} \right]^{-1} = \left[ \sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \frac{(c\rho)^c (1 - \rho^{K-c+1})}{c!(1 - \rho)} \right]^{-1}
+\end{equation}
+
+(với trường hợp $\rho = 1$, số hạng tổng hình học được thay bằng $K - c + 1$).
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/M/c/K$}
+\begin{align*}
+    &\textbf{Tham số:} && c \text{ máy chủ}, \quad K \ge c, \quad \text{Ghế chờ: } K - c, \quad \rho = \frac{\lambda}{c\mu} \\[4pt]
+    &\textbf{Xác suất rỗng } p_0\textbf{:} && p_0 = \left[ \sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \frac{(c\rho)^c(1 - \rho^{K-c+1})}{c!(1 - \rho)} \right]^{-1} \\[4pt]
+    &\textbf{Xác suất mất gói:} && P_b = p_K = \frac{c^c \rho^K}{c!} p_0, \qquad \lambda_{\text{eff}} = \lambda(1 - P_b) \\[4pt]
+    &\textbf{Số khách hàng đợi:} && L_q = \frac{p_0 (c\rho)^c \rho}{c!(1-\rho)^2} \left[ 1 - \rho^{K-c+1} - (1 - \rho)(K-c+1)\rho^{K-c} \right] \\[4pt]
+    &\textbf{Chỉ số thời gian (Little):} && W_q = \frac{L_q}{\lambda_{\text{eff}}}, \qquad W = W_q + \frac{1}{\mu}, \qquad L = \lambda_{\text{eff}} W
+\end{align*}
+\end{modelbox}
+
+\newpage
+
+% -------------------------------------------------------------
+% MODEL 7: M/D/1
+% -------------------------------------------------------------
+\subsubsection{Mô hình đối chứng \texorpdfstring{$M/D/1$}{M/D/1}: Thời gian phục vụ tất định}
+
+\hspace{0.5cm}Trong thực tế kỹ thuật, nhiều thiết bị mạng và phần cứng tính toán có thời gian xử lý cố định không đổi (ví dụ: chuyển tiếp khung tin Ethernet kích thước chuẩn qua cổng vật lý cố định). Mô hình $M/D/1$ có dòng đến Poisson nhưng thời gian phục vụ là một hằng số tất định: $s = 1/\mu$, tương ứng phương sai thời gian phục vụ $\sigma_s^2 = 0$.
+
+\textbf{Công thức Pollaczek-Khinchine (P-K Formula):}
+
+Đối với hàng đợi tổng quát $M/G/1$, công thức Pollaczek-Khinchine xác định thời gian chờ trung bình trong hàng đợi là:
+\begin{equation}
+    W_q = \frac{\lambda E[s^2]}{2(1 - \rho)} = \frac{\lambda (\sigma_s^2 + (1/\mu)^2)}{2(1 - \rho)}
+\end{equation}
+
+\begin{itemize}[leftmargin=1.5em]
+    \item Đối với $M/M/1$: Thời gian phục vụ phân phối mũ nên $\sigma_s^2 = (1/\mu)^2 \implies E[s^2] = 2/\mu^2$. Thay vào công thức P-K thu được:
+    \begin{equation}
+        W_q^{(M/M/1)} = \frac{\lambda (2/\mu^2)}{2(1 - \rho)} = \frac{\rho}{\mu(1 - \rho)}
+    \end{equation}
+
+    \item Đối với $M/D/1$: Thời gian phục vụ tất định nên $\sigma_s^2 = 0 \implies E[s^2] = 1/\mu^2$. Thay vào công thức P-K:
+    \begin{equation}
+        W_q^{(M/D/1)} = \frac{\lambda (1/\mu^2)}{2(1 - \rho)} = \frac{\rho}{2\mu(1 - \rho)} = \frac{1}{2} W_q^{(M/M/1)}
+    \end{equation}
+\end{itemize}
+
+\textbf{So sánh sâu sắc:} Nhờ loại bỏ hoàn toàn tính biến động (phương sai) của thời gian phục vụ ($\sigma_s^2 = 0$), \textit{thời gian chờ đợi trong hàng đợi của mô hình $M/D/1$ giảm chính xác $50\%$ so với mô hình $M/M/1$ tại cùng một mức tải trọng $\rho$}!
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mô hình $M/D/1$ (So sánh $M/M/1$)}
+\begin{align*}
+    &\textbf{Tham số:} && c = 1, \quad s = \frac{1}{\mu} \text{ (Hằng số), } \quad \sigma_s^2 = 0, \quad \rho = \frac{\lambda}{\mu} < 1 \\[4pt]
+    &\textbf{Thời gian chờ trong hàng đợi:} && W_q = \frac{\rho}{2\mu(1 - \rho)} = \frac{1}{2} W_q^{(M/M/1)} \\[4pt]
+    &\textbf{Thời gian đáp ứng:} && W = \frac{1}{\mu} + \frac{\rho}{2\mu(1 - \rho)} \\[4pt]
+    &\textbf{Số khách trong hàng đợi:} && L_q = \frac{\rho^2}{2(1 - \rho)} \\[4pt]
+    &\textbf{Số khách trong hệ thống:} && L = \rho + \frac{\rho^2}{2(1 - \rho)}
+\end{align*}
+\end{modelbox}
+
+\subsection{Mô hình mạng hàng đợi Jackson (Jackson Queueing Networks)}
+\label{subsec:mang-hang-doi-jackson}
+
+\subsubsection{Cấu trúc mạng hàng đợi mở (Open Jackson Networks)}
+
+\hspace{0.5cm}Trong các hệ thống phân tán thực tế, một yêu cầu sau khi được xử lý tại trạm này có thể được định tuyến chuyển tiếp sang các trạm khác trước khi rời khỏi hệ thống. Một mạng hàng đợi mở gồm $M$ trạm phục vụ được gọi là \textbf{Mạng Jackson} nếu thỏa mãn 4 điều kiện:
+\begin{enumerate}[leftmargin=1.5em]
+    \item Mỗi trạm $i \in \{1, 2, \dots, M\}$ tiếp nhận một dòng yêu cầu từ nguồn ngoại vi theo quy trình Poisson độc lập với tốc độ $\gamma_i \ge 0$.
+    \item Mỗi trạm $i$ có $c_i$ máy chủ phục vụ với thời gian phục vụ phân phối mũ tốc độ $\mu_i$, kỷ luật phục vụ FCFS và bộ đệm vô hạn.
+    \item Một yêu cầu hoàn tất tại trạm $i$ được chuyển tiếp tới trạm $j$ với xác suất chuyển đổi $r_{ij} \ge 0$, hoặc rời khỏi mạng hoàn toàn với xác suất $d_i = 1 - \sum_{j=1}^M r_{ij}$. Ma trận $P = [r_{ij}]_{M \times M}$ là ma trận xác suất chuyển đổi tuyến đường.
+    \item Các quyết định định tuyến là độc lập thống kê với trạng thái quá khứ và hiện tại của các hàng đợi.
+\end{enumerate}
+
+\subsubsection{Hệ phương trình cân bằng lưu lượng (Traffic Equations)}
+
+\hspace{0.5cm}Để mạng đạt trạng thái dừng ổn định, tổng tốc độ dòng yêu cầu đi vào trạm $i$ ($\lambda_i$) phải bằng tổng tốc độ luồng ngoại vi $\gamma_i$ cộng các luồng chuyển tiếp từ tất cả các trạm $j$ trong mạng:
+\begin{equation}
+    \lambda_i = \gamma_i + \sum_{j=1}^M \lambda_j \cdot r_{ji}, \quad i = 1, 2, \dots, M
+    \label{eq:traffic-equations}
+\end{equation}
+Viết dưới dạng phương trình ma trận: $\bm{\lambda}^T = \bm{\gamma}^T + \bm{\lambda}^T P \implies \bm{\lambda}^T = \bm{\gamma}^T (I - P)^{-1}$.
+
+\begin{theorempop}[title=\textbf{Định lý Jackson (Jackson's Theorem, 1957)}]
+Nếu mọi trạm trong mạng đều thỏa mãn điều kiện ổn định $\rho_i = \frac{\lambda_i}{c_i \mu_i} < 1$ ($\forall i = 1, \dots, M$), thì phân phối xác suất đồng thời của số lượng yêu cầu $(n_1, n_2, \dots, n_M)$ tại các trạm ở trạng thái dừng có \textbf{dạng tích độc lập (Product-Form Solution)}:
+\begin{equation}
+    P(n_1, n_2, \dots, n_M) = \prod_{i=1}^M p_i(n_i)
+\end{equation}
+
+trong đó $p_i(n_i)$ chính là phân phối xác suất dừng của một trạm hàng đợi Kendall $M/M/c_i$ độc lập có tốc độ đến trung bình bằng $\lambda_i$ và tốc độ phục vụ $\mu_i$!
+\end{theorempop}
+
+\textbf{Ý nghĩa đột phá của Định lý Jackson:} 
+
+Mặc dù trong thực tế các dòng chuyển tiếp giữa các nút trong mạng có thể không còn là dòng Poisson thuần nhất do tác động can thiệp của các trạm trước, Định lý Jackson chứng minh rằng ở trạng thái cân bằng, \textit{từng trạm trong mạng vẫn hành xử hoàn toàn giống hệt như một hàng đợi Poisson độc lập}!
+
+\subsubsection{Ứng dụng giải tích cho Mô hình mạng tham chiếu của đề tài}
+
+Kiến trúc mạng hàng đợi tham chiếu trong bài tập lớn được mô tả bởi sơ đồ đồ hình luồng sự kiện trong Hình~\ref{fig:jackson-reference-network}.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.92\linewidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.2cm and 1.6cm,
+    box/.style={
+        rectangle, draw=bkblue, fill=boxbg, thick,
+        minimum width=2.5cm, minimum height=1.0cm,
+        rounded corners=2mm, align=center, font=\small\bfseries
+    },
+    circle_node/.style={
+        circle, draw=successborder, fill=successbg, thick,
+        minimum size=1.2cm, align=center, font=\small\bfseries
+    },
+    arrow/.style={-{Stealth[length=3mm]}, thick, color=bkblue}
+]
+    \node[circle_node] (source) {Source};
+    \node[box, right=of source] (io) {I/O-Device\\($\mu_4$)};
+    \node[box, right=of io] (cpu) {CPU\\($\mu_1$)};
+    \node[box, above right=0.6cm and 1.6cm of cpu] (printer) {Printer\\($\mu_2$)};
+    \node[box, below right=0.6cm and 1.6cm of cpu] (disk) {Disk\\($\mu_3$)};
+    \node[circle_node, below right=0.6cm and 1.6cm of printer] (sink) {Sink};
+
+    \draw[arrow] (source) -- node[above, font=\footnotesize] {$\lambda$} (io);
+    \draw[arrow] (io) -- (cpu);
+
+    \draw[arrow] (cpu) |- node[near end, above, font=\footnotesize]
+        {$p_{\text{printer}}=0.3$} (printer);
+
+    \draw[arrow] (cpu) |- node[near end, below, font=\footnotesize]
+        {$p_{\text{disk}}=0.7$} (disk);
+
+    \draw[arrow] (printer) -| node[pos=0.25, above, font=\footnotesize] {$1.0$} (sink);
+    \draw[arrow] (disk) -| node[pos=0.25, below, font=\footnotesize] {$1.0$} (sink);
+
+\end{tikzpicture}%
+}
+\caption{Sơ đồ cấu trúc mạng hàng đợi Jackson 4 trạm tham chiếu của đề tài}
+\label{fig:jackson-reference-network}
+\label{fig:network-spec}
+\end{figure}
+
+
+Hệ thống bao gồm 4 trạm phục vụ đơn máy chủ ($c_i = 1$):
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Trạm 1 - Thiết bị ngoại vi (I/O-Device):} Tốc độ phục vụ $\mu_4$. Luồng đến ngoại vi $\gamma_{\text{IO}} = \lambda$.
+    \item \textbf{Trạm 2 - Bộ vi xử lý (CPU Server):} Tốc độ phục vụ $\mu_1$. Toàn bộ dòng từ I/O chuyển tiếp sang CPU: $r_{\text{IO}, \text{CPU}} = 1.0$.
+    \item \textbf{Trạm 3 - Máy in (Printer):} Tốc độ phục vụ $\mu_2$. CPU rẽ nhánh sang Printer với xác suất $p_{\text{printer}} = 0.3$.
+    \item \textbf{Trạm 4 - Ổ đĩa lưu trữ (Disk Server):} Tốc độ phục vụ $\mu_3$. CPU rẽ nhánh sang Disk với xác suất $p_{\text{disk}} = 0.7$.
+    \item \textbf{Điểm đích (Sink):} Thu gom toàn bộ các gói tin hoàn tất từ Printer và Disk để ghi nhận kết quả.
+\end{itemize}
+
+\textbf{Thiết lập hệ phương trình lưu lượng:}
+\begin{align}
+    \lambda_{\text{IO}} &= \lambda \\
+    \lambda_{\text{CPU}} &= \lambda_{\text{IO}} = \lambda \\
+    \lambda_{\text{Printer}} &= p_{\text{printer}} \cdot \lambda_{\text{CPU}} = 0.3 \cdot \lambda \\
+    \lambda_{\text{Disk}} &= p_{\text{disk}} \cdot \lambda_{\text{CPU}} = 0.7 \cdot \lambda
+\end{align}
+
+\textbf{Điều kiện ổn định và Nút thắt cổ chai (Bottleneck Node):}
+Hệ số tải của từng trạm phục vụ là:
+\begin{equation}
+    \rho_{\text{IO}} = \frac{\lambda}{\mu_4}, \quad \rho_{\text{CPU}} = \frac{\lambda}{\mu_1}, \quad \rho_{\text{Printer}} = \frac{0.3\lambda}{\mu_2}, \quad \rho_{\text{Disk}} = \frac{0.7\lambda}{\mu_3}
+\end{equation}
+
+Điều kiện ổn định toàn mạng yêu cầu: $\max\{\rho_{\text{IO}}, \rho_{\text{CPU}}, \rho_{\text{Printer}}, \rho_{\text{Disk}}\} < 1$.
+Trạm có hệ số sử dụng lớn nhất $\rho_{\max} = \max_i (\rho_i)$ chính là \textbf{nút thắt cổ chai (Bottleneck)}. Khi tốc độ đến $\lambda$ tăng dần, nút này sẽ chạm ngưỡng bão hòa ($\rho = 1$) đầu tiên, quyết định giới hạn thông lượng tối đa của toàn hệ thống: $\lambda_{\max} = \min\left\{\mu_4, \mu_1, \frac{\mu_2}{0.3}, \frac{\mu_3}{0.7}\right\}$.
+
+\textbf{Chỉ số hiệu năng toàn mạng (End-to-End Metrics):}
+
+Vì mỗi nút $i$ độc lập đóng vai trò là một hàng đợi $M/M/1$, thời gian đáp ứng tại từng nút là $W_i = \frac{1}{\mu_i - \lambda_i}$.
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Tổng số khách trung bình trong toàn mạng ($L_{\text{net}}$):}
+    \begin{equation}
+        L_{\text{net}} = L_{\text{IO}} + L_{\text{CPU}} + L_{\text{Printer}} + L_{\text{Disk}} = \frac{\rho_{\text{IO}}}{1 - \rho_{\text{IO}}} + \frac{\rho_{\text{CPU}}}{1 - \rho_{\text{CPU}}} + \frac{\rho_{\text{Printer}}}{1 - \rho_{\text{Printer}}} + \frac{\rho_{\text{Disk}}}{1 - \rho_{\text{Disk}}}
+    \end{equation}
+    
+    \item \textbf{Thời gian đáp ứng trung bình toàn trình (End-to-End Response Time -- $W_{\text{net}}$):}
+    Theo định luật Little mở rộng cho toàn mạng với tốc độ đến ngoại vi tổng $\gamma = \lambda$:
+    \begin{equation}
+        W_{\text{net}} = \frac{L_{\text{net}}}{\lambda} = W_{\text{IO}} + W_{\text{CPU}} + 0.3 \cdot W_{\text{Printer}} + 0.7 \cdot W_{\text{Disk}}
+    \end{equation}
+\end{itemize}
+
+\begin{modelbox}{Bộ công thức giải tích chuẩn cho Mạng Jackson 4 trạm tham chiếu}
+\begin{align*}
+    &\textbf{Tốc độ luân chuyển:} && \lambda_{\text{IO}} = \lambda, \quad \lambda_{\text{CPU}} = \lambda, \quad \lambda_{\text{Printer}} = 0.3\lambda, \quad \lambda_{\text{Disk}} = 0.7\lambda \\[4pt]
+    &\textbf{Hệ số sử dụng máy chủ:} && \rho_i = \frac{\lambda_i}{\mu_i} < 1 \quad (\forall i \in \{\text{IO}, \text{CPU}, \text{Printer}, \text{Disk}\}) \\[4pt]
+    &\textbf{Chỉ số tại trạm } i\textbf{:} && W_i = \frac{1}{\mu_i - \lambda_i}, \qquad L_i = \frac{\lambda_i}{\mu_i - \lambda_i} = \frac{\rho_i}{1 - \rho_i} \\[4pt]
+    &\textbf{Tổng số khách toàn mạng:} && L_{\text{net}} = L_{\text{IO}} + L_{\text{CPU}} + L_{\text{Printer}} + L_{\text{Disk}} \\[4pt]
+    &\textbf{Thời gian đáp ứng toàn trình:} && W_{\text{net}} = W_{\text{IO}} + W_{\text{CPU}} + 0.3 W_{\text{Printer}} + 0.7 W_{\text{Disk}} = \frac{L_{\text{net}}}{\lambda}
+\end{align*}
+\end{modelbox}

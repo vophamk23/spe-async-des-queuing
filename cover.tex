@@ -1,0 +1,83 @@
+\begin{titlepage}
+\newgeometry{left=25mm, right=25mm, top=18mm, bottom=18mm}
+\singlespacing
+\setlength{\parskip}{0pt}
+
+%% --- Khung viền đôi chuẩn Bách Khoa ---
+\begin{tikzpicture}[remember picture, overlay]
+  \draw[line width=0.16cm, color=black]
+    ([xshift=13mm, yshift=-13mm]current page.north west)
+    rectangle
+    ([xshift=-13mm, yshift=13mm]current page.south east);
+  \draw[line width=0.05cm, color=black]
+    ([xshift=15mm, yshift=-15mm]current page.north west)
+    rectangle
+    ([xshift=-15mm, yshift=15mm]current page.south east);
+\end{tikzpicture}
+
+\begin{center}
+\vspace*{-0.2cm}
+
+{\fontsize{14}{17}\selectfont\bfseries
+  ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH\\[3pt]
+  TRƯỜNG ĐẠI HỌC BÁCH KHOA\\[3pt]
+  KHOA KHOA HỌC \& KỸ THUẬT MÁY TÍNH\par}
+
+\vspace{0.25cm}
+\begin{tikzpicture}
+  \draw[line width=0.6pt] (-2.8,0) -- (-0.2,0);
+  \node at (0,0) {{\large $\bullet$}};
+  \draw[line width=0.6pt] (0.2,0) -- (2.8,0);
+\end{tikzpicture}
+
+\vspace{0.45cm}
+\includegraphics[width=4cm]{image/hcmut.png}\par
+
+\vspace{0.55cm}
+{\fontsize{16.5}{18}\selectfont\bfseries BÁO CÁO BÀI TẬP LỚN\par}
+\vspace{0.15cm}
+{\fontsize{16.5}{19}\selectfont\bfseries \TenMonHoc\par}
+
+\vspace{0.15cm}
+\rule{\textwidth}{1.0pt}
+\vspace{-0.15cm}
+
+{\fontsize{16.25}{18}\selectfont\bfseries\color{blue}
+  \TenDeTai\par}
+
+\vspace{0.2cm}
+\rule{\textwidth}{1.0pt}
+
+\vspace{0.35cm}
+{\fontsize{15}{16}\selectfont\bfseries Lớp: \LopMonHoc{} -- Nhóm: SPE-L0x-008\par}
+\vspace{0.15cm}
+{\fontsize{15}{16}\selectfont\bfseries Ngày nộp: \NgayNop\par}
+\vspace{0.18cm}
+{\fontsize{15}{15.5}\selectfont\bfseries GVHD: \GVHD\par}
+
+
+\vspace{0.18cm}
+{\fontsize{13.5}{14.5}\selectfont
+\renewcommand{\arraystretch}{1.4}
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{|c|p{5.8cm}<{\centering}|p{3.2cm}<{\centering}|}
+\hline
+\textbf{STT} & \textbf{Họ và Tên Sinh Viên} & \textbf{MSSV} \\ \hline
+1 & Lê Kim Ngân & 2312218 \\ \hline
+2 & Lê Trần Bảo Nhi & 2312499 \\ \hline
+3 & Nguyễn Anh Thư & 2313385 \\ \hline
+4 & Phan Ngọc Phương Trinh & 2313582 \\ \hline
+5 & Phạm Công Võ & 2313946 \\ \hline
+6 & Lưu Nguyên Vũ & 2314058 \\ \hline
+7 & Nguyễn Thị Thảo Vân & 2420010 \\ \hline
+8 & Nguyễn Trung Kiên & 2311738 \\ \hline
+9 & Trần Quang Vinh & 2313932 \\ \hline
+\end{tabular}\par}
+
+\vfill
+{\fontsize{12}{15}\selectfont TP. HỒ CHÍ MINH, THÁNG 12/2026\par}
+\vspace*{0.2cm}
+
+\end{center}
+\end{titlepage}
+\restoregeometry

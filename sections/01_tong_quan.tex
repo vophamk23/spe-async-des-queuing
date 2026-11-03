@@ -1,0 +1,368 @@
+\section{Tổng quan đề tài và Mục tiêu đánh giá}
+\label{sec:tong-quan}
+
+\hspace{0.5cm}Nghiên cứu tập trung thiết lập bối cảnh kỹ thuật, xác định phạm vi nghiên cứu, các mục tiêu đo lường trọng tâm và phương pháp luận đánh giá hiệu năng hệ thống dựa trên quy trình khoa học của Raj Jain \cite{ref_jain}. Trọng tâm nội dung hướng đến việc phân tích bài toán điều phối trong các hệ thống xử lý bất đồng bộ hiện đại, xây dựng và chuẩn hóa hệ thống chỉ số đánh giá hiệu năng (Key Performance Indicators -- KPIs), đồng thời hệ thống hóa các ký hiệu và quy ước toán học giải tích làm cơ sở lý thuyết thống nhất cho quá trình phân tích, mô hình hóa và kiểm chứng xuyên suốt đề tài.
+\subsection{Bối cảnh bài toán và Mục tiêu hệ thống}
+\label{subsec:boi-canh-muc-tieu}
+
+\subsubsection{Bối cảnh kỹ thuật: Chuyển dịch sang kiến trúc bất đồng bộ hướng sự kiện}
+
+\hspace{0.5cm}Trong kỷ nguyên của các hệ thống phân tán, điện toán đám mây và vi dịch vụ (Microservices), khối lượng công việc đặt lên các cổng giao tiếp mạng (API Gateways, Load Balancers) và máy chủ dịch vụ ngày càng gia tăng với tốc độ đột biến. Các mô hình lập trình đồng bộ truyền thống dựa trên cơ chế phân luồng đa luồng (\textit{Multi-threading with Blocking I/O}) bộc lộ những giới hạn nghiêm trọng:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Quá tải chi phí chuyển đổi ngữ cảnh (Context Switching Overhead):} Khi số lượng kết nối đồng thời chạm ngưỡng hàng chục nghìn (bài toán C10K/C1000K), hệ điều hành phải dành phần lớn chu kỳ CPU cho việc hoán đổi không gian thanh ghi và ngăn xếp luồng (Thread Stack), làm suy giảm nghiêm trọng thông lượng hữu ích.
+    \item \textbf{Cạn kiệt tài nguyên bộ nhớ:} Mỗi luồng hệ điều hành tiêu tốn một vùng bộ nhớ cố định (thường từ 2MB đến 8MB cho stack frame). Việc duy trì một lượng lớn luồng chờ I/O thụ động dẫn đến cạn kiệt tài nguyên bộ nhớ (OOM -- Out of Memory).
+\end{itemize}
+
+Để giải quyết triệt để vấn đề này, các nền tảng kỹ thuật hiện đại (Node.js, Go Goroutines, Python Asynchronous I/O -- \texttt{asyncio}) đã chuyển dịch mạnh mẽ sang mô hình kiến trúc phi nghẽn, hướng sự kiện (\textit{Non-blocking Event-Driven Architecture}) dựa trên Vòng lặp sự kiện (Event Loop) và cơ chế Đa nhiệm cộng tác (Cooperative Multitasking). Trong kiến trúc này, luồng thực thi chính không bao giờ bị phong tỏa (block) khi thực hiện các cuộc gọi I/O; thay vào đó, tác vụ được đóng gói dưới dạng đối tượng ủy thác tương lai (\textit{Promise / Future}) và tiếp tục nhường quyền điều khiển CPU cho các tác vụ khác.
+
+\textbf{Bài toán thách thức đặt ra:} Mặc dù kiến trúc bất đồng bộ giải phóng tài nguyên CPU khỏi việc chờ đợi I/O, nó lại chuyển dịch áp lực sang các hàng đợi nhiệm vụ (Task Queues / In-memory Buffers). Khi tốc độ luồng yêu cầu gửi đến ($\lambda$) vượt quá tốc độ xử lý của trạm phục vụ ($\mu$), các tác vụ bất đồng bộ sẽ nhanh chóng tích lũy trong bộ đệm. Nếu không được kiểm soát thông qua các mô hình điều phối hàng đợi khoa học, hệ thống sẽ đối mặt với tình trạng phình to độ trễ (Bufferbloat), tràn bộ đệm (Queue Overflow) và sụp đổ dịch vụ dây chuyền.
+
+\subsubsection{Mục tiêu và phạm vi đánh giá hiệu năng}
+
+\hspace{0.5cm}Xuất phát từ yêu cầu cấp thiết trên, đề tài này được triển khai nhằm đạt được các mục tiêu kỹ thuật cụ thể sau:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Xây dựng bộ mô phỏng sự kiện rời rạc chuẩn công nghiệp (DES Engine):} Thiết kế và hiện thực một khung mô phỏng DES hướng đối tượng (OOP) theo chuẩn PDES của Richard Fujimoto, tích hợp sâu cùng thư viện \texttt{asyncio} trên nền tảng Python 3.11+, hỗ trợ đa dạng cấu trúc hàng đợi ưu tiên (Min-Heap, LadderQueue).
+    \item \textbf{Khảo sát và đánh giá toàn diện 6 mô hình hàng đợi đơn Kendall:} Khảo sát định lượng các chỉ số hiệu năng trên 6 trạm hàng đợi cơ bản: $M/M/1$, $M/M/1/K$, $M/M/\infty$, $M/M/n/n$ (Erlang-B Loss System), $M/M/c$ (Erlang-C Delay System) và $M/M/c/K$, đồng thời đối chiếu với mô hình thời gian phục vụ tất định $M/D/1$.
+    \item \textbf{Phân tích và mô phỏng mạng hàng đợi Jackson đa chặng:} Đánh giá mạng xử lý phân tán 4 trạm vật lý gồm luồng tuần tự (Pipeline) và rẽ nhánh xác suất (Branching Network) theo đúng kiến trúc tham chiếu của đề tài: $\text{Source} \to \text{I/O} \to \text{CPU} \to \{\text{Printer}, \text{Disk}\} \to \text{Sink}$.
+    \item \textbf{Thẩm định chéo (Cross-Validation) giữa Mô phỏng và Giải tích:} Sử dụng các công thức giải tích kinh điển của Lý thuyết Hàng đợi làm giá trị chuẩn (Ground Truth) để kiểm chứng độ chính xác của bộ mô phỏng DES, đo lường sai số tương đối (Relative Error $\le 5\%$) và độ rộng khoảng tin cậy 95\% (Confidence Interval).
+\end{enumerate}
+
+\subsection{Dịch vụ hệ thống và Kết quả khả dĩ}
+\label{subsec:dich-vu-ket-qua}
+
+\hspace{0.5cm}Theo phương pháp luận Raj Jain, bước xác định ranh giới hệ thống yêu cầu đặc tả rõ các dịch vụ cung cấp và danh mục toàn bộ các kết quả khả dĩ mà một yêu cầu có thể trải qua khi luân chuyển trong hệ thống.
+
+\subsubsection{Đặc tả 4 dịch vụ cốt lõi của hệ thống}
+
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Dịch vụ Tiếp nhận yêu cầu (Ingestion Service):} Đóng vai trò là cổng giao tiếp ngoại vi, chịu trách nhiệm tiếp nhận các gói tin / yêu cầu gửi đến từ môi trường ngoài theo quy trình ngẫu nhiên Poisson với tốc độ trung bình $\lambda$. Dịch vụ thực hiện gán định danh duy nhất (Task ID), đóng dấu thời gian vào hệ thống ($t_{\text{arrival}}$) và chuyển giao cho bộ phận điều phối.
+    \item \textbf{Dịch vụ Quản lý hàng đợi (Queuing / Buffer Management Service):} Quản lý không gian nhớ đệm của trạm phục vụ theo kỷ luật FCFS (First-Come, First-Served). Dịch vụ chịu trách nhiệm kiểm tra dung lượng đệm tối đa $K$. Nếu còn chỗ trống, yêu cầu được đẩy vào hàng chờ; nếu bộ đệm đã bão hòa, kích hoạt cơ chế hủy gói (Drop).
+    \item \textbf{Dịch vụ Xử lý tính toán và I/O (Processing Service):} Điều phối các tài nguyên vật lý (CPU core, kênh đọc/ghi ổ đĩa, máy in) để giải quyết tác vụ. Thời gian phục vụ của mỗi yêu cầu tuân theo phân phối ngẫu nhiên xác định (phân phối Mũ với tốc độ $\mu$, hoặc phân phối Tất định $D$). Khi máy chủ bận, các yêu cầu tiếp theo phải xếp hàng.
+    \item \textbf{Dịch vụ Phản hồi và Báo hiệu bất đồng bộ (Notification Service):} Cầu nối giữa động cơ mô phỏng và ứng dụng phía người dùng. Khi một tác vụ hoàn tất tại trạm cuối cùng (Sink), dịch vụ này cập nhật trạng thái của đối tượng \texttt{asyncio.Future}, đánh thức các tiến trình đang chờ đợi (\texttt{await}) và ghi nhận số liệu thống kê vào Trace Log.
+\end{enumerate}
+
+\subsubsection{Bốn trạng thái kết quả khả dĩ (Possible Outcomes)}
+
+\hspace{0.5cm}Đối với mỗi yêu cầu được bơm vào hệ thống, kết quả thực thi được phân loại chính xác vào một trong 4 trạng thái sau:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Xử lý thành công (Success):} Yêu cầu đi qua trọn vẹn các chặng phục vụ cần thiết, hoàn thành xử lý và rời khỏi hệ thống đúng quy trình kỹ thuật. Toàn bộ thời gian lưu trú trong hệ thống ($W$) được ghi nhận đầy đủ.
+    \item \textbf{Đang chờ phục vụ (Queued):} Yêu cầu đã được tiếp nhận hợp lệ nhưng toàn bộ máy chủ đang bận; tác vụ hiện đang nằm trong hàng đợi chờ tới lượt xử lý theo trật tự FCFS.
+    \item \textbf{Bị chặn / Hủy gói do tràn đệm (Dropped / Blocked):} Yêu cầu gửi đến trạm phục vụ đúng thời điểm hệ thống đã đạt sức chứa tối đa ($K$ khách hàng). Yêu cầu bị loại bỏ ngay lập tức, không được phục vụ và làm tăng biến đếm mất gói ($N_{\text{dropped}}$).
+    \item \textbf{Hết thời hạn chờ (Timeout / Aborted):} Áp dụng cho các kịch bản bất đồng bộ nâng cao có thiết lập giới hạn thời gian (Deadline). Nếu thời gian nằm trong hàng đợi vượt quá ngưỡng quy định, tác vụ bị hủy ngang để bảo toàn tài nguyên cho hệ thống.
+\end{enumerate}
+
+\subsection{Hệ thống chỉ số hiệu năng chính (KPIs)}
+\label{subsec:chi-so-hieu-nang}
+
+\hspace{0.5cm}Để đánh giá định lượng chất lượng phục vụ của hệ thống, 5 nhóm chỉ số hiệu năng chính được chuẩn hóa toán học như sau:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Thông lượng hệ thống (Throughput -- $X$ hoặc $\lambda_{\text{out}}$):} Số lượng yêu cầu hoàn tất xử lý thành công trên một đơn vị thời gian mô phỏng ($T_{\text{sim}}$):
+    \begin{equation}
+        X = \frac{N_{\text{completed}}}{T_{\text{sim}}} \quad (\text{yêu cầu/giây hoặc req/s})
+    \end{equation}
+    Đối với các hệ thống không mất gói và đạt trạng thái dừng, thông lượng bằng tốc độ đến: $X = \lambda$. Đối với các hệ thống có tổn thất ($M/M/1/K$, $M/M/c/K$), thông lượng hiệu dụng là: $\lambda_{\text{eff}} = \lambda(1 - P_b)$.
+\newpage
+    \item \textbf{Thời gian đáp ứng ($W$ - Response Time) và Thời gian chờ ($W_q$ - Waiting Time):}
+    \begin{itemize}
+        \item Thời gian chờ trong hàng đợi ($W_q$): Khoảng thời gian từ khi yêu cầu vào hàng đợi đến thời điểm bắt đầu được phục vụ: $W_q = t_{\text{service\_start}} - t_{\text{arrival}}$.
+        \item Thời gian đáp ứng toàn hệ thống ($W$): Tổng thời gian một yêu cầu trải qua trong trạm phục vụ, gồm thời gian chờ và thời gian thực thi ($S$):
+        \begin{equation}
+            W = W_q + S = t_{\text{departure}} - t_{\text{arrival}} \implies E[W] = E[W_q] + \frac{1}{\mu}
+        \end{equation}
+    \end{itemize}
+
+    \item \textbf{Số lượng yêu cầu trung bình trong hệ thống ($L$) và trong hàng đợi ($L_q$):}
+    \begin{itemize}
+        \item $L_q = E[n_q]$: Số lượng yêu cầu trung bình đang nằm chờ trong bộ đệm.
+        \item $L = E[n]$: Tổng số lượng yêu cầu đang có mặt tại trạm phục vụ (bao gồm các yêu cầu đang chờ và các yêu cầu đang được máy chủ phục vụ): $L = L_q + L_s$.
+    \end{itemize}
+
+    \item \textbf{Hệ số sử dụng máy chủ (Server Utilization -- $\rho$ và $U$):} Tỷ lệ phần trăm thời gian các máy chủ ở trạng thái làm việc bận rộn:
+    \begin{equation}
+        \rho = \frac{\lambda}{c \cdot \mu}, \quad U = \frac{\sum_{i=1}^c T_{\text{busy}}^{(i)}}{c \cdot T_{\text{sim}}}
+    \end{equation}
+    Điều kiện bắt buộc để hệ thống hàng đợi có bộ đệm vô hạn đạt trạng thái ổn định (Ergodic / Steady-state) là $\rho < 1$.
+
+    \item \textbf{Xác suất mất gói / Chặn dịch vụ (Blocking / Drop Probability -- $P_b$):} Tỷ lệ các yêu cầu bị loại bỏ do bộ đệm đầy trên tổng số yêu cầu đã gửi đến:
+    \begin{equation}
+        P_b = \frac{N_{\text{dropped}}}{N_{\text{arrived}}}
+    \end{equation}
+\end{itemize}
+
+% \clearpage
+\subsection{Bảng quy ước ký hiệu toán học và thuật ngữ kỹ thuật}
+\label{subsec:bang-ky-hieu}
+
+\hspace{0.5cm}Nhằm đảm bảo tính mạch lạc, chính xác và nhất quán xuyên suốt toàn bộ báo cáo, Bảng~\ref{tab:math-notation} tổng hợp đầy đủ các ký hiệu toán học, định nghĩa lý thuyết và đơn vị tính tương ứng.
+\begingroup
+\small
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{5pt}
+\begin{xltabular}{\linewidth}{@{} >{\centering\arraybackslash}p{1.6cm} >{\raggedright\arraybackslash}p{6.25cm} >{\raggedright\arraybackslash}X >{\centering\arraybackslash}p{1.6cm} @{}}
+\arrayrulecolor{bkblue}\toprule[1.5pt]
+\rowcolor{bkblue}%
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Ký hiệu}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Thuật ngữ Anh -- Việt}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Định nghĩa \& Ý nghĩa vật lý}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Đơn vị}}} \tabularnewline
+\midrule[1pt]
+\endfirsthead
+
+\arrayrulecolor{bkblue}\toprule[1.5pt]
+\rowcolor{bkblue}%
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Ký hiệu}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Thuật ngữ Anh -- Việt}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Định nghĩa \& Ý nghĩa vật lý}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Đơn vị}}} \tabularnewline
+\midrule[1pt]
+\endhead
+
+\arrayrulecolor{bkblue!40}\midrule[0.6pt]
+\endfoot
+
+\arrayrulecolor{bkblue}\bottomrule[1.5pt]
+\caption{Bảng quy ước ký hiệu toán học và thuật ngữ kỹ thuật chuẩn hóa} \label{tab:math-notation} \\
+\endlastfoot
+
+\rowcolor{white}
+$\tau$ & Inter-arrival time (Thời gian liên đến) & Khoảng thời gian ngẫu nhiên giữa 2 lần đến liên tiếp: $\tau_j = t_j - t_{j-1}$ & giây ($s$) \\
+\rowcolor{boxbg}
+$\lambda$ & Arrival rate (Tốc độ đến) & Số lượng yêu cầu trung bình gửi đến hệ thống trong một đơn vị thời gian: $\lambda = 1 / E[\tau]$ & yêu cầu/$s$ \\
+\rowcolor{white}
+$s$ & Service time (Thời gian phục vụ) & Thời gian máy chủ xử lý hoàn tất một yêu cầu; kỳ vọng $E[s] = 1/\mu$ & giây ($s$) \\
+\rowcolor{boxbg}
+$\mu$ & Service rate (Tốc độ phục vụ) & Số lượng yêu cầu một máy chủ có thể xử lý trong một đơn vị thời gian: $\mu = 1 / E[s]$ & yêu cầu/$s$ \\
+\rowcolor{white}
+$c$ ($m$) & Number of servers (Số máy chủ) & Số lượng bộ xử lý / kênh phục vụ độc lập làm việc song song & máy chủ \\
+\rowcolor{boxbg}
+$K$ ($B$) & System capacity (Sức chứa tối đa) & Tổng số yêu cầu tối đa cho phép trong hệ thống (gồm cả đang xử lý và hàng đợi) & yêu cầu \\
+\rowcolor{white}
+$SD$ & Service discipline (Kỷ luật phục vụ) & Quy tắc lựa chọn yêu cầu từ hàng đợi để phục vụ (FCFS, LCFS, PS, SPT, ...) & quy tắc \\
+\rowcolor{boxbg}
+$\rho$ & Traffic intensity / Utilization & Hệ số cường độ tải của trạm phục vụ: $\rho = \frac{\lambda}{c\mu}$ & hệ số \\
+\rowcolor{white}
+$a$ & Offered load (Tải đề nghị) & Lượng lưu lượng đến tính theo đơn vị Erlang: $a = \lambda / \mu = c\rho$ & Erlang \\
+\rowcolor{boxbg}
+$n$ & System jobs (Số khách trong hệ thống) & Biến ngẫu nhiên chỉ tổng số khách hàng hiện diện trong trạm phục vụ & yêu cầu \\
+\rowcolor{white}
+$n_q$ & Queue jobs (Số khách trong hàng đợi) & Biến ngẫu nhiên chỉ số lượng khách hàng đang chờ tại bộ đệm ($n = n_q + n_s$) & yêu cầu \\
+\rowcolor{boxbg}
+$n_s$ & Active servers (Số khách đang xử lý) & Số lượng máy chủ đang bận xử lý tác vụ tại một thời điểm ($n_s \le c$) & yêu cầu \\
+\rowcolor{white}
+$L$ & Mean number in system ($E[n]$) & Kỳ vọng toán học số lượng yêu cầu có mặt trong toàn bộ hệ thống & yêu cầu \\
+\rowcolor{boxbg}
+$L_q$ & Mean number in queue ($E[n_q]$) & Kỳ vọng toán học số lượng yêu cầu đang chờ trong hàng đợi & yêu cầu \\
+\rowcolor{white}
+$r$ & Response time (Thời gian đáp ứng) & Biến ngẫu nhiên tổng thời gian lưu lại trong hệ thống: $r = w + s$ & giây ($s$) \\
+\rowcolor{boxbg}
+$w$ & Waiting time (Thời gian chờ) & Biến ngẫu nhiên thời gian khách hàng phải chờ trong hàng đợi trước khi phục vụ & giây ($s$) \\
+\rowcolor{white}
+$W$ & Mean response time ($E[r]$) & Kỳ vọng thời gian lưu trú trong hệ thống (Sojourn time): $W = L / \lambda_{\text{eff}}$ & giây ($s$) \\
+\rowcolor{boxbg}
+$W_q$ & Mean waiting time ($E[w]$) & Kỳ vọng thời gian chờ đợi trong bộ đệm: $W_q = L_q / \lambda_{\text{eff}} = W - 1/\mu$ & giây ($s$) \\
+\rowcolor{white}
+$p_k$ & State probability ($P\{n = k\}$) & Xác suất dừng của hệ thống khi có chính xác $k$ khách hàng có mặt & xác suất \\
+\rowcolor{boxbg}
+$p_0$ & Idle probability ($P\{n = 0\}$) & Xác suất hệ thống hoàn toàn rỗng (tất cả máy chủ đều rảnh rỗi) & xác suất \\
+\rowcolor{white}
+$P_b$ & Blocking probability (Xác suất chặn) & Xác suất một yêu cầu mới đến bị từ chối do bộ đệm đầy ($p_K$ hoặc $B(n,a)$) & xác suất \\
+\rowcolor{boxbg}
+$\lambda_{\text{eff}}$ & Effective arrival rate (Tốc độ hữu hiệu) & Tốc độ luồng yêu cầu thực tế được tiếp nhận vào phục vụ: $\lambda(1 - P_b)$ & yêu cầu/$s$ \\
+\rowcolor{white}
+$\gamma_i$ & External arrival rate (Tốc độ đến ngoài) & Tốc độ dòng Poisson từ nguồn ngoại vi đưa trực tiếp vào trạm $i$ trong mạng Jackson & yêu cầu/$s$ \\
+\rowcolor{boxbg}
+$r_{ij}$ & Routing probability (Xác suất rẽ nhánh) & Xác suất gói tin sau khi hoàn tất tại trạm $i$ được chuyển tiếp tới trạm $j$ & xác suất \\
+\end{xltabular}
+\endgroup
+\subsection{Tham số hệ thống, Tải làm việc và Kế hoạch thực nghiệm}
+\label{subsec:tham-so-yeu-to}
+
+\hspace{0.5cm}Theo bước 4 (List Parameters) và bước 5 (Select Factors and Levels) trong phương pháp luận Raj Jain \cite{ref_jain}, việc thiết kế thực nghiệm đòi hỏi sự phân tách tường minh giữa các đại lượng cấu hình hệ thống, đặc trưng của luồng tải làm việc, và các yếu tố chủ động biến thiên trong từng kịch bản đo đạc.
+
+\subsubsection{Tham số hệ thống (System Parameters)}
+\hspace{0.5cm}Tham số hệ thống bao gồm các thuộc tính phần cứng và cấu hình phần mềm được duy trì cố định làm môi trường cơ sở (baseline) trong mỗi đợt đo đạc:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Số lượng máy chủ song song ($c$):} $c \in \{1, 2, 4, 8\}$ máy chủ. Đại diện cho sự tiến hóa kiến trúc từ các vi xử lý đơn lõi (Single-core), vi xử lý đa lõi (Multi-core) đến các cụm máy chủ dịch vụ phân tán (Server Cluster) cùng khai thác chung một hàng đợi nhiệm vụ.
+    \item \textbf{Kích thước bộ đệm lưu trữ tối đa ($K$):} $K \in \{3, 5, 10, 20, 50, \infty\}$ yêu cầu. Mô phỏng các ngưỡng giới hạn tài nguyên bộ nhớ khả dụng (RAM / Queue buffer limit) trong hệ thống thực tế. Tham số này kích hoạt cơ chế phòng ngự tràn bộ đệm (Backpressure / Drop tail) khi hệ thống chạm ngưỡng tới hạn.
+    \item \textbf{Tốc độ phục vụ chuẩn hóa của máy chủ ($\mu$):} Được cấu hình ở hai mức tải chuẩn: $\mu = 10.0$ yêu cầu/giây (thời gian phục vụ trung bình $E[s] = 1/\mu = 100\,\text{ms}$) cho các bài đo độ trễ chi tiết, và $\mu = 2.0$ yêu cầu/giây ($E[s] = 500\,\text{ms}$) cho các kịch bản đo đạc lưu lượng Erlang.
+    \item \textbf{Kỷ luật phục vụ hàng đợi (Service Discipline -- $SD$):} Kỷ luật \textit{First-Come, First-Served} (FCFS / FIFO) không ưu tiên (Non-preemptive), đảm bảo tính công bằng tuyệt đối cho các tiến trình logic xếp hàng.
+\end{itemize}
+
+Bảng~\ref{tab:system-parameters} tổng hợp các tham số hệ thống then chốt, dải cấu hình và ý nghĩa kỹ thuật trong mô hình.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{5pt}
+\begin{tabularx}{\linewidth}{@{} >{\bfseries\raggedright\arraybackslash}p{3.6cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{4.0cm} >{\raggedright\arraybackslash}X @{}}
+\arrayrulecolor{bkblue}\toprule[1.5pt]
+\rowcolor{bkblue}%
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Tham số hệ thống}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Ký hiệu}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Phân loại}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Giá trị cấu hình}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Ý nghĩa kỹ thuật}}} \tabularnewline
+\midrule[1pt]
+\rowcolor{white}Số máy chủ & $c$ & System Param & $\{1, 2, 4, 8\}$ & Cấu hình lõi CPU / Trạm xử lý song song \\
+\rowcolor{boxbg}Dung lượng bộ đệm & $K$ & System / Factor & $\{3, 5, 8, 12, 20, 50, \infty\}$ & Ngưỡng dung lượng bộ nhớ RAM giới hạn \\
+\rowcolor{white}Tốc độ phục vụ & $\mu$ & System Param & $\{2.0, 10.0\}$ req/s & Năng lực tính toán của mỗi máy chủ \\
+\rowcolor{boxbg}Xác suất rẽ nhánh & $p$ & System Param & $p_{\text{printer}}=0.3,\, p_{\text{disk}}=0.7$ & Cơ chế định tuyến ngẫu nhiên mạng Jackson \\
+\rowcolor{white}Kỷ luật phục vụ & $SD$ & System Param & FCFS / FIFO & Kỷ luật phục vụ không ưu tiên \\
+\arrayrulecolor{bkblue}\bottomrule[1.5pt]
+\end{tabularx}
+\caption{Bảng phân loại và cấu hình tham số hệ thống (System Parameters)}
+\label{tab:system-parameters}
+\end{table}
+
+\subsubsection{Tham số tải làm việc (Workload Parameters)}
+\hspace{0.5cm}Tham số tải làm việc mô tả các thuộc tính thống kê ngẫu nhiên của luồng yêu cầu đầu vào:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Tốc độ yêu cầu đến ($\lambda$):} Được điều chỉnh biến thiên liên tục theo công thức $\lambda = \rho \cdot c \cdot \mu$ nhằm quét toàn diện dải cường độ tải từ trạng thái rảnh rỗi đến tiệm cận bão hòa: $\rho \in [0.10, 0.95]$.
+    \item \textbf{Quy luật phân phối dòng đến (Arrival Process):} Dòng Poisson thuần nhất (Homogeneous Poisson Process), khoảng cách thời gian giữa hai lần đến liên tiếp tuân theo phân phối Mũ: $\tau \sim \text{Exponential}(\lambda)$. Thuộc tính này đảm bảo tính chất không nhớ (Memoryless) và tính chất PASTA (\textit{Poisson Arrivals See Time Averages}).
+    \item \textbf{Quy luật thời gian phục vụ (Service Process):}
+    \begin{itemize}
+        \item \textit{Phân phối Mũ ngẫu nhiên ($M$):} Thời gian xử lý $s \sim \text{Exponential}(\mu)$ cho 6 mô hình hàng đợi chuẩn Kendall ($M/M/1$, $M/M/1/K$, $M/M/\infty$, $M/M/n/n$, $M/M/c$, $M/M/c/K$).
+        \item \textit{Phân phối Tất định hằng số ($D$):} Thời gian xử lý cố định $s = 1/\mu$ cho mô hình đối chứng $M/D/1$, phục vụ việc đánh giá tác động của độ biến thiên thời gian phục vụ lên độ trễ hàng đợi theo định lý Pollaczek-Khinchine.
+    \end{itemize}
+\end{itemize}
+
+Bảng~\ref{tab:workload-parameters} tổng kết các tham số tải làm việc, yếu tố nghiên cứu và điều kiện thống kê cho toàn bộ kế hoạch thực nghiệm.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{5pt}
+\begin{tabularx}{\linewidth}{@{} >{\bfseries\raggedright\arraybackslash}p{3.7cm} >{\centering\arraybackslash}p{1.4cm} >{\raggedright\arraybackslash}p{2.7cm} >{\raggedright\arraybackslash}p{3.45cm} >{\raggedright\arraybackslash}p{3.2cm}}
+\arrayrulecolor{bkblue}\toprule[1.5pt]
+\rowcolor{bkblue}%
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Tham số tải}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Ký hiệu}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Phân loại}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Dải giá trị khảo sát}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Ý nghĩa kỹ thuật}}} \tabularnewline
+\midrule[1pt]
+\rowcolor{white}Tốc độ đến & $\lambda$ & Workload / Factor & $[1.0, 9.5]$ req/s & Áp lực lưu lượng gửi đến từ môi trường ngoài \\
+\rowcolor{boxbg}Hệ số sử dụng tải & $\rho$ & Study Factor & $\{0.1, 0.3, 0.5,$ $0.7, 0.8, 0.9, 0.95\}$ & Mức độ làm việc của hệ thống (tải rảnh $\to$ bão hòa) \\
+\rowcolor{white}Tải đề nghị Erlang & $a$ & Study Factor & $[1.0, 20.0]$ Erlang & Khảo sát hệ thống mất gói $M/M/n/n$ (Erlang-B) \\
+\rowcolor{boxbg}Thời gian mô phỏng & $T_{\text{sim}}$ & Execution Param & $3000 - 10000$ giây ảo & Đảm bảo hệ thống đạt trạng thái dừng ổn định \\
+\rowcolor{white}Số lượt lặp độc lập & $R$ & Statistical Param & $R \ge 30$ lượt chạy & Đảm bảo khoảng tin cậy 95\% theo chuẩn Student-$t$ \\
+\arrayrulecolor{bkblue}\bottomrule[1.5pt]
+\end{tabularx}
+\caption{Bảng phân loại tham số tải làm việc và các yếu tố nghiên cứu (Workload Parameters \& Study Factors)}
+\label{tab:workload-parameters}
+\end{table}
+
+\subsubsection{Thiết kế Kế hoạch thực nghiệm và 5 Kịch bản khảo sát cốt lõi}
+\hspace{0.5cm}Để chứng minh độ tin cậy của bộ máy mô phỏng DES và đánh giá toàn diện các hiện tượng tắc nghẽn, kế hoạch thực nghiệm được xây dựng thành 5 kịch bản phân tầng chặt chẽ:
+\begin{enumerate}[leftmargin=1.5em, itemsep=6pt]
+    \item \textbf{Kịch bản 1 - Khảo sát hành vi phi tuyến tiệm cận bão hòa ($\rho \to 1$) trên $M/M/1$:}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Mục tiêu:} Làm rõ hiện tượng trễ bùng nổ phi tuyến và sự suy sụp hiệu năng khi hệ số tải vượt ngưỡng an toàn ($\rho > 0.80$).
+        \item \textbf{Phương pháp:} Cố định năng lực máy chủ $\mu = 10.0\,\text{req/s}$; quét biến thiên \newline $\lambda \in \{1.0, 3.0, 5.0, 7.0, 8.0, 8.5, 9.0, 9.5\}\,\text{req/s}$ (tương ứng $\rho \in [0.10, 0.95]$).
+        \item \textbf{Chỉ số theo dõi:} Thời gian đáp ứng trung bình $W$ và số khách trung bình $L$, đối chiếu trực tiếp với công thức giải tích $W = \frac{1}{\mu(1-\rho)}$ và $L = \frac{\rho}{1-\rho}$.
+    \end{itemize}
+
+    \item \textbf{Kịch bản 2 - Phân tích độ nhạy của dung lượng bộ đệm ($M/M/1/K$ và $M/M/c/K$):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Mục tiêu:} Giải quyết bài toán đánh đổi kỹ thuật (\textit{Trade-off}) giữa Xác suất mất gói ($P_b$) và Thời gian trễ hàng đợi ($W_q$), nhận diện hiện tượng tràn đệm (\textit{Bufferbloat}).
+        \item \textbf{Phương pháp:} Khảo sát dưới hai chế độ: Tải nặng ($\rho = 0.9$) và Quá tải ($\rho = 1.2$); quét biến thiên kích thước đệm $K \in \{3, 5, 8, 12, 20, 30, 50\}$ yêu cầu.
+        \item \textbf{Chỉ số theo dõi:} Xác suất rớt gói thực nghiệm $P_b = N_{\text{dropped}} / N_{\text{arrived}}$, thông lượng hữu hiệu $\lambda_{\text{eff}} = \lambda(1 - P_b)$ và thời gian chờ $W_q$.
+    \end{itemize}
+
+    \item \textbf{Kịch bản 3 - Tối ưu hóa kiến trúc máy chủ đa luồng ($M/M/c$ vs. $M/M/1$):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Mục tiêu:} Giải quyết bài toán thiết kế: \textit{Nên trang bị 1 máy chủ siêu nhanh tốc độ $c\mu$ hay $c$ máy chủ song song tốc độ $\mu$ chia sẻ chung một hàng đợi?}
+        \item \textbf{Phương pháp:} Cố định tổng năng lực phục vụ $C_{\text{total}} = c\mu = 20.0\,\text{req/s}$; so sánh cấu hình 1 máy chủ ($c=1, \mu=20$) với các cụm đa máy chủ ($c=2, \mu=10$), ($c=4, \mu=5$).
+        \item \textbf{Chỉ số theo dõi:} Xác suất phải chờ xếp hàng $P(\text{Wait}) = P_C(c, a)$ (công thức Erlang-C) và thời gian lưu trú toàn trình $W$.
+    \end{itemize}
+
+    \item \textbf{Kịch bản 4 - Phân tích mạng hàng đợi Jackson và Nhận diện điểm nghẽn (Bottleneck):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Mục tiêu:} Phân tích luồng cân bằng mạng hàng đợi mở, định vị chính xác vị trí thắt cổ chai (\textit{bottleneck}) giới hạn hiệu năng của toàn hệ thống.
+        \item \textbf{Phương pháp:} Cấu hình kiến trúc 4 trạm $\text{Source} \to \text{I/O} \to \text{CPU} \to \{\text{Printer}, \text{Disk}\} \to \text{Sink}$ với $\mu_{\text{IO}} = 8.0, \mu_{\text{CPU}} = 10.0, \mu_{\text{Printer}} = 4.0, \mu_{\text{Disk}} = 6.0\,\text{req/s}$; xác suất rẽ nhánh sau CPU là $p_{\text{printer}} = 0.3, p_{\text{disk}} = 0.7$.
+        \item \textbf{Chỉ số theo dõi:} Hệ số tải cục bộ $\rho_i = \lambda_i / \mu_i$ tại từng trạm và thời gian trễ toàn trình đầu--cuối (\textit{End-to-End Latency}).
+    \end{itemize}
+
+    \item \textbf{Kịch bản 5 - Thẩm định ảnh hưởng của phương sai thời gian phục vụ ($M/M/1$ vs. $M/D/1$):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Mục tiêu:} Kiểm chứng định lý Pollaczek--Khinchine (P--K) về tác động tiêu cực của độ biến thiên phục vụ lên độ trễ hàng đợi.
+        \item \textbf{Phương pháp:} So sánh mô hình phục vụ ngẫu nhiên phân phối Mũ ($\sigma_s^2 = 1/\mu^2$) với mô hình thời gian phục vụ tất định ($\sigma_s^2 = 0$) tại cùng tốc độ $\mu = 10.0\,\text{req/s}$.
+        \item \textbf{Chỉ số theo dõi:} Chứng minh thực nghiệm: khi triệt tiêu hoàn toàn phương sai, thời gian chờ trong hàng đợi giảm chính xác một nửa: $W_q(M/D/1) = \frac{1}{2} W_q(M/M/1)$.
+    \end{itemize}
+\end{enumerate}
+
+
+\subsection{Lựa chọn kỹ thuật đánh giá hiệu năng}
+\label{subsec:ky-thuat-danh-gia}
+
+\hspace{0.5cm}Theo giáo trình Raj Jain \cite{ref_jain}, bước 6 trong quy trình đánh giá hiệu năng đòi hỏi sự lựa chọn khoa học giữa ba phương pháp luận: \textbf{Mô hình hóa giải tích (\textit{Analytical Modeling})}, \textbf{Đo đạc thực tế (\textit{Direct Measurement})} và \textbf{Mô phỏng sự kiện rời rạc (\textit{Discrete-Event Simulation -- DES})}.
+
+\subsubsection{So sánh ba phương pháp luận đánh giá}
+\begin{itemize}[leftmargin=1.5em, itemsep=6pt]
+    \item \textbf{Mô hình hóa giải tích (\textit{Analytical Modeling}):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Bản chất kỹ thuật:} Giải hệ phương trình cân bằng dừng (\textit{Global Balance Equations}) của chuỗi Markov (CTMC), công thức Pollaczek--Khinchine và mạng Jackson.
+        \item \textbf{Ưu điểm vượt trội:} Cho nghiệm đóng (\textit{closed-form solution}) chính xác tuyệt đối ($100\%$) với thời gian tính toán tức thì.
+        \item \textbf{Hạn chế cốt lõi:} Bị ràng buộc bởi các giả thiết ngẫu nhiên lý tưởng (Poisson, phân phối Mũ); bất lực trước các hành vi phi tuyến vi mô (vòng lặp sự kiện bất đồng bộ, cơ chế drop-tail khi tràn bộ đệm).
+        \item \textbf{Vai trò trong đề tài:} Đóng vai trò là hệ quy chiếu chuẩn (\textit{Ground Truth}) để thẩm định chéo độ chính xác của bộ mô phỏng DES.
+    \end{itemize}
+
+    \item \textbf{Đo đạc thực tế (\textit{Direct Measurement}):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Bản chất kỹ thuật:} Triển khai tải thực nghiệm trên phần cứng thật và thu thập số liệu qua các công cụ đo chuyên dụng (Prometheus, eBPF, JMeter).
+        \item \textbf{Ưu điểm vượt trội:} Phản ánh chính xác tác động vật lý của CPU đa lõi, phân cấp bộ nhớ đệm (Cache) và chi phí chuyển đổi ngữ cảnh (\textit{context switch}) của hệ điều hành.
+        \item \textbf{Hạn chế cốt lõi:} Chi phí thiết bị đắt đỏ, không khả thi khi hệ thống chưa được chế tạo; khó kiểm soát nhiễu mạng và tiềm ẩn nguy cơ gây sập hệ thống khi đẩy tải tới hạn ($P_b \to 1$).
+        \item \textbf{Vai trò trong đề tài:} Cung cấp các thông số kiểm chuẩn thực tế về thời gian xử lý và trễ vật lý cho mô hình.
+    \end{itemize}
+
+    \item \textbf{Mô phỏng sự kiện rời rạc (\textit{Discrete-Event Simulation -- DES}):}
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=2pt]
+        \item \textbf{Bản chất kỹ thuật:} Vận hành bằng cách duy trì hàng đợi sự kiện tương lai (\texttt{EventQueue}) và bước nhảy thời gian ảo, chuyển trạng thái hệ thống theo từng mốc biến cố ngẫu nhiên.
+        \item \textbf{Ưu điểm vượt trội:} Cho phép mô hình hóa chi tiết mọi tiến trình bất đồng bộ phức tạp của \texttt{asyncio} (Coroutines, TaskGroup); linh hoạt tùy biến thông số với chi phí thấp và an toàn tuyệt đối.
+        \item \textbf{Thách thức kỹ thuật:} Tồn tại sai số phương sai do lấy mẫu ngẫu nhiên; đòi hỏi kỹ thuật loại bỏ pha quá độ (\textit{Warm-up}) và quy trình lặp thống kê ($R \ge 30$) nghiêm ngặt.
+        \item \textbf{Vai trò trong đề tài:} Phương pháp khảo sát thực nghiệm trọng tâm xuyên suốt 5 kịch bản phân tích hiệu năng.
+    \end{itemize}
+\end{itemize}
+
+\newpage
+Bảng~\ref{tab:evaluation-techniques} tổng hợp so sánh đa tiêu chí giữa ba phương pháp luận theo chuẩn Raj Jain.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{5pt}
+\begin{tabularx}{\linewidth}{@{} >{\bfseries\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X @{}}
+\arrayrulecolor{bkblue}\toprule[1.5pt]
+\rowcolor{bkblue}%
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Tiêu chí đánh giá}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Mô hình Giải tích}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Đo đạc Thực tế}}} & 
+\multicolumn{1}{c}{\textcolor{white}{\textbf{Mô phỏng DES}}} \tabularnewline
+\midrule[1pt]
+\rowcolor{white}Giai đoạn áp dụng & Mọi giai đoạn thiết kế & Hệ thống đã tồn tại vật lý & Mọi giai đoạn thiết kế \\
+\rowcolor{boxbg}Thời gian \& Chi phí & Nhanh; Chi phí rất thấp & Rất chậm; Chi phí rất cao & Trung bình; Chi phí thấp \\
+\rowcolor{white}Khả năng mở rộng & Giới hạn bởi độ phức tạp toán & Giới hạn bởi phần cứng vật lý & Rất cao, linh hoạt mọi tham số \\
+\rowcolor{boxbg}Độ chính xác & Tuyệt đối (với giả thiết lý tưởng) & Cao nhất trên môi trường thực & Rất cao (tiệm cận lý thuyết) \\
+\rowcolor{white}Độ phức tạp toán & Rất cao khi mạng mở rộng & Không yêu cầu & Thấp đến trung bình \\
+\rowcolor{boxbg}Mô hình hóa bất đồng bộ & Kém (không biểu diễn Event Loop) & Tốt nhưng khó kiểm soát vi mô & Tối ưu (khớp 100\% coroutine) \\
+\arrayrulecolor{bkblue}\bottomrule[1.5pt]
+\end{tabularx}
+\caption{So sánh 3 phương pháp đánh giá hiệu năng hệ thống theo chuẩn Raj Jain}
+\label{tab:evaluation-techniques}
+\end{table}
+
+\subsubsection{Chiến lược phương pháp luận kép (Dual-Methodology Strategy)}
+\hspace{0.5cm}Nhận thức rõ ưu nhược điểm trên, đề tài áp dụng \textbf{Chiến lược phương pháp luận kép}: lấy \textbf{Mô phỏng DES} làm công cụ khảo sát thực nghiệm chủ đạo, kết hợp \textbf{Mô hình giải tích} làm hệ quy chiếu thẩm định chuẩn (\textit{Ground Truth}):
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+    \item \textbf{Hệ quy chiếu chuẩn (Ground Truth):} Sử dụng công thức giải tích đóng để thẩm định chéo bộ mô phỏng DES trên 6 mô hình Kendall chuẩn, bảo đảm sai số tương đối không vượt quá ngưỡng quy định ($\le 3\% - 5\%$).
+    \item \textbf{Không gian thực nghiệm mở rộng (DES Extensibility):} Sau khi kiểm chứng độ chính xác, bộ mô phỏng DES được dùng để phân tích các bài toán phi tuyến vượt ngoài khả năng giải tích: điều phối đồng quy \texttt{TaskGroup}, \texttt{as\_completed}, phân tích tải đột biến (\textit{Bursty Traffic}) và phân vị trễ đuôi ($P_{95}, P_{99}$).
+    \item \textbf{Kiểm chuẩn tính dừng và Độ tin cậy thống kê:}
+    \begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+        \item \textit{Loại bỏ pha quá độ (Warm-up Period):} Loại bỏ 500 yêu cầu đầu tiên để triệt tiêu ảnh hưởng khởi động từ trạng thái rỗng, chỉ thu thập số liệu khi hệ thống đã đạt trạng thái dừng (\textit{Steady-state}).
+        \item \textit{Chạy lặp độc lập (Independent Replications):} Thực hiện $R \ge 30$ lượt chạy với seed ngẫu nhiên độc lập để triệt tiêu phương sai lấy mẫu, tính toán Khoảng tin cậy 95\% (\textit{Confidence Interval}) theo phân phối Student-$t$, đảm bảo tính chuẩn xác và tái lập của kết quả.
+    \end{itemize}
+\end{itemize}
